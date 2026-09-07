@@ -30,7 +30,7 @@ public static class ConversionReportWriter
                 await using var reportStream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
                 await using var reportWriter = new StreamWriter(reportStream, new UTF8Encoding(false));
                 await reportWriter.WriteAsync(report.AsMemory(), cancellationToken);
-                viewModel.SetReportStatus(true);
+                viewModel.SetReportStatus(true, path);
                 return;
             }
 

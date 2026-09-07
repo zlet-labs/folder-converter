@@ -161,8 +161,7 @@ public sealed class JsonConversionAdapterTests : IDisposable
 
         Assert.Equal(1, summary.Succeeded);
         var percentages = reports.Select(report => report.OperationPercent).ToArray();
-        Assert.Equal<int?[]>([10, 25, 55, 80, 92, 95, 100], percentages);
-        Assert.True(percentages.Zip(percentages.Skip(1), (left, right) => left <= right).All(value => value));
+        Assert.Equal<int?[]>([null, 100], percentages);
         Assert.Equal(OperationStatus.Succeeded, reports[^1].Status);
         Assert.Equal(100, reports[^1].OperationPercent);
 
@@ -191,8 +190,7 @@ public sealed class JsonConversionAdapterTests : IDisposable
 
         Assert.Equal(1, summary.Failed);
         Assert.Equal(OperationStatus.Failed, reports[^1].Status);
-        Assert.NotNull(reports[^1].OperationPercent);
-        Assert.True(reports[^1].OperationPercent < 100);
+        Assert.True(reports[^1].OperationPercent is null || reports[^1].OperationPercent < 100);
         Assert.DoesNotContain(reports, report =>
             report.Status == OperationStatus.Failed && report.OperationPercent == 100);
     }

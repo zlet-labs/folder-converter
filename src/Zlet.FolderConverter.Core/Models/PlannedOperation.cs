@@ -21,7 +21,7 @@ public sealed record PlannedOperation(
 {
     public string OperationKey => $"{SourcePath}\0{WorksheetName}\0{Target}";
     public string TargetFormat => Target == ConversionTarget.Skip
-        ? "Не трогать"
+        ? "Пропускаем"
         : Target.ToDisplayName();
 
     public bool IsWorksheetOperation => !string.IsNullOrWhiteSpace(WorksheetName);

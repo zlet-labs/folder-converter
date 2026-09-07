@@ -155,7 +155,7 @@ public sealed class LocalizationTests : IDisposable
     {
         var en = ReadResources("en-US"); var ru = ReadResources("ru-RU");
         Assert.Equal("Converted", en["StatusConverted"]); Assert.Equal("Преобразовано", ru["StatusConverted"]);
-        Assert.Equal("To convert", en["FilterConvert"]); Assert.Equal("К преобразованию", ru["FilterConvert"]);
+        Assert.Equal("To process", en["FilterConvert"]); Assert.Equal("К обработке", ru["FilterConvert"]);
         Assert.Equal("Folder", en["OutputFolder"]); Assert.Equal("Папка", ru["OutputFolder"]);
         Assert.Equal("available", en["OfficeAvailable"]); Assert.Equal("доступен", ru["OfficeAvailable"]);
     }

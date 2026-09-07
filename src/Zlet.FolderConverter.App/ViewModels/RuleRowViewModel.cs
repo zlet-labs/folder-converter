@@ -52,6 +52,10 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
     public string ExtensionBreakdown => ExtensionBreakdownFormatter.Format(_extensionFiles, _localization);
     public bool HasExtensionBreakdown => !string.IsNullOrWhiteSpace(ExtensionBreakdown);
     public IReadOnlyList<ConversionTargetOption> Targets { get; private set; }
+    public bool HasMultipleTargets => Targets.Count > 1;
+    public bool IsSingleAction => Targets.Count <= 1;
+    public string SingleActionReason => _localization.Get("RuleSingleActionReason");
+    public string SingleActionTooltip => string.Format(_localization.Culture, _localization.Get("RuleOnlyActionAvailable"), SelectedTarget.Label);
 
     public ConversionTargetOption SelectedTarget
     {
@@ -65,6 +69,7 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
 
             _selectedTarget = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(SingleActionTooltip));
             _selectionChanged(SourceFormat, value.Target);
         }
     }
@@ -88,6 +93,8 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(FormatLabel));
         OnPropertyChanged(nameof(ExtensionBreakdown));
         OnPropertyChanged(nameof(HasExtensionBreakdown));
+        OnPropertyChanged(nameof(SingleActionReason));
+        OnPropertyChanged(nameof(SingleActionTooltip));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>

@@ -1,3 +1,4 @@
+using Zlet.FolderConverter.App.Localization;
 using Zlet.FolderConverter.App.ViewModels;
 using Zlet.FolderConverter.Core.Models;
 using Zlet.FolderConverter.Core.Services;
@@ -145,7 +146,7 @@ public sealed class PresentationTests : IDisposable
         var operation = Assert.Single(viewModel.Operations).Operation;
         Assert.Equal(ConversionTarget.Markdown, operation.Target);
         Assert.EndsWith(".md", operation.TargetPath);
-        Assert.Equal("Правило изменено. Preview обновлён.", viewModel.StateMessage);
+        Assert.Equal("Правило изменено. Предпросмотр обновлён.", viewModel.StateMessage);
     }
 
     [Fact]
@@ -472,7 +473,7 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(2, viewModel.UnavailableCount);
         Assert.Equal(0, viewModel.SkippedCount);
         Assert.Equal(0, viewModel.ErrorCount);
-        Assert.Equal("Преобразовать 1 файл", viewModel.ConvertButtonText);
+        Assert.Equal("Обработать 1 файл", viewModel.ConvertButtonText);
 
         await viewModel.ConvertAsync();
 
@@ -522,11 +523,11 @@ public sealed class PresentationTests : IDisposable
     }
 
     [Theory]
-    [InlineData(1, "Преобразовать 1 файл")]
-    [InlineData(2, "Преобразовать 2 файла")]
-    [InlineData(5, "Преобразовать 5 файлов")]
-    [InlineData(11, "Преобразовать 11 файлов")]
-    [InlineData(21, "Преобразовать 21 файл")]
+    [InlineData(1, "Обработать 1 файл")]
+    [InlineData(2, "Обработать 2 файла")]
+    [InlineData(5, "Обработать 5 файлов")]
+    [InlineData(11, "Обработать 11 файлов")]
+    [InlineData(21, "Обработать 21 файл")]
     public async Task Convert_button_uses_russian_declension(
         int readyCount,
         string expected)
@@ -778,6 +779,89 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(validHash, Hash(validPath));
         Assert.Equal(invalidHash, Hash(invalidPath));
         Assert.False(Directory.Exists(stagingRoot));
+    }
+
+    [Fact]
+    public void RuleRowViewModel_single_action_presentation_properties_and_localization()
+    {
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+        var singleTargetCapability = FormatCapabilityCatalog.Get(SourceFormat.Odt);
+        var singleRule = new RuleRowViewModel(
+            singleTargetCapability,
+            5,
+            ConversionTarget.Skip,
+            (_, _) => { },
+            localization: localization);
+
+        Assert.True(singleRule.IsSingleAction);
+        Assert.False(singleRule.HasMultipleTargets);
+        Assert.Equal("Преобразование для этого формата не поддерживается", singleRule.SingleActionReason);
+        Assert.Equal("Единственное доступное действие: Пропускаем", singleRule.SingleActionTooltip);
+
+        localization.Apply(AppLanguage.English);
+        singleRule.RefreshLocalization();
+
+        Assert.True(singleRule.IsSingleAction);
+        Assert.False(singleRule.HasMultipleTargets);
+        Assert.Equal("Conversion for this format is not supported", singleRule.SingleActionReason);
+        Assert.Equal("Only available action: Skip", singleRule.SingleActionTooltip);
+
+        var multiTargetCapability = FormatCapabilityCatalog.Get(SourceFormat.Doc);
+        var multiRule = new RuleRowViewModel(
+            multiTargetCapability,
+            3,
+            ConversionTarget.Docx,
+            (_, _) => { },
+            localization: localization);
+
+        Assert.False(multiRule.IsSingleAction);
+        Assert.True(multiRule.HasMultipleTargets);
+    }
+
+    [Fact]
+    public void OperationRowViewModel_starts_indeterminate_without_fake_percentage_hold()
+    {
+        var clock = new ManualTimeProvider();
+        var operation = new PlannedOperation(
+            Path.Combine(_rootPath, "file.doc"),
+            "file.doc",
+            SourceFormat.Doc,
+            ConversionTarget.Docx,
+            ".docx",
+            Path.Combine(_rootPath, "_converted", "file.docx"),
+            true,
+            OperationStatus.Ready,
+            "ready");
+
+        var row = new OperationRowViewModel(operation);
+        row.BeginExecution(clock.GetTimestamp(), null);
+
+        Assert.Equal("В процессе", row.Status);
+        Assert.DoesNotContain("%", row.Status);
+
+        row.BeginExecution(clock.GetTimestamp(), 42);
+        Assert.Equal("В процессе · 42%", row.Status);
+    }
+
+    [Fact]
+    public async Task MainWindowViewModel_report_path_and_open_report_lifecycle()
+    {
+        Write("doc.json", "{}");
+        var viewModel = CreateViewModel();
+
+        await viewModel.ScanAsync();
+        Assert.False(viewModel.CanOpenReport);
+        Assert.Equal(string.Empty, viewModel.ReportPath);
+
+        await viewModel.ConvertAsync();
+        Assert.True(viewModel.HasFinalReport);
+        Assert.True(viewModel.CanOpenReport);
+        Assert.True(File.Exists(viewModel.ReportPath));
+        Assert.EndsWith(".txt", viewModel.ReportPath, StringComparison.OrdinalIgnoreCase);
+
+        viewModel.ResetOutputPath();
+        Assert.False(viewModel.CanOpenReport);
+        Assert.Equal(string.Empty, viewModel.ReportPath);
     }
 
     public void Dispose()

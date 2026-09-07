@@ -174,9 +174,9 @@
 
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="320" MinWidth="280" />
+                    <ColumnDefinition Width="390" MinWidth="340" MaxWidth="460" />
                     <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" MinWidth="400" />
+                    <ColumnDefinition Width="*" MinWidth="480" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0"
@@ -242,23 +242,24 @@
                                     </DataTemplate>
                                 </DataGrid.RowDetailsTemplate>
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="{DynamicResource Format}" Width="*">
+                                    <DataGridTemplateColumn Header="{DynamicResource Format}" Width="95" MinWidth="80">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel VerticalAlignment="Center"
-                                                            Margin="12,0,0,0">
+                                                            Margin="10,0,0,0">
                                                     <TextBlock Text="{Binding FormatLabel}"
-                                                               FontWeight="SemiBold" />
+                                                               FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource Found}" Width="72">
+                                    <DataGridTemplateColumn Header="{DynamicResource Found}" Width="56">
                                         <DataGridTemplateColumn.HeaderStyle>
                                             <Style TargetType="DataGridColumnHeader"
                                                    BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
                                                 <Setter Property="HorizontalContentAlignment" Value="Center" />
-                                                <Setter Property="Padding" Value="8,0" />
+                                                <Setter Property="Padding" Value="4,0" />
                                             </Style>
                                         </DataGridTemplateColumn.HeaderStyle>
                                         <DataGridTemplateColumn.CellTemplate>
@@ -270,19 +271,51 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource Action}" Width="150">
+                                    <DataGridTemplateColumn Header="{DynamicResource Action}" Width="*" MinWidth="175">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Targets}"
-                                                          SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
-                                                          IsEnabled="{Binding DataContext.CanChangeRules, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                          MinWidth="112">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding Label}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
+                                                <Grid VerticalAlignment="Center" Margin="4,0,8,0">
+                                                    <ComboBox ItemsSource="{Binding Targets}"
+                                                              SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
+                                                              IsEnabled="{Binding DataContext.CanChangeRules, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                              HorizontalAlignment="Stretch"
+                                                              Visibility="{Binding HasMultipleTargets, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <Border Background="#252A3D"
+                                                            BorderBrush="#3D4566"
+                                                            BorderThickness="1"
+                                                            CornerRadius="6"
+                                                            Padding="8,5"
+                                                            HorizontalAlignment="Stretch"
+                                                            ToolTipService.ShowDuration="10000"
+                                                            Visibility="{Binding IsSingleAction, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <Border.ToolTip>
+                                                            <ToolTip Background="#1F2437" BorderBrush="#3D4566" Foreground="#E2E8F0">
+                                                                <StackPanel MaxWidth="280">
+                                                                    <TextBlock Text="{Binding SingleActionTooltip}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                                    <TextBlock Text="{Binding SingleActionReason}" Margin="0,4,0,0" FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                            </ToolTip>
+                                                        </Border.ToolTip>
+                                                        <Grid>
+                                                            <TextBlock Text="{Binding SelectedTarget.Label}"
+                                                                       Foreground="#94A3B8"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       VerticalAlignment="Center" />
+                                                            <Path Data="M 0 0 L 4 4 L 8 0 Z"
+                                                                  Fill="#64748B"
+                                                                  HorizontalAlignment="Right"
+                                                                  VerticalAlignment="Center"
+                                                                  Margin="0,0,4,0"
+                                                                  Opacity="0.4" />
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -479,7 +512,7 @@
                                       BorderThickness="0"
                                       Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="" Width="42">
+                                    <DataGridTemplateColumn Header="" Width="40">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -489,7 +522,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource SourceFile}" Width="1.5*">
+                                    <DataGridTemplateColumn Header="{DynamicResource SourceFile}" Width="1.8*" MinWidth="130">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding FilePath}"
@@ -498,22 +531,11 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="{DynamicResource Size}"
-                                                        Binding="{Binding FileSizeText}"
-                                                        Width="82" />
                                     <DataGridTextColumn Header="{DynamicResource Action}"
                                                         Binding="{Binding ActionLabel}"
-                                                        Width="145" />
-                                    <DataGridTemplateColumn Header="{DynamicResource Result}" Width="1.25*">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding ResultPath}"
-                                                           ToolTip="{Binding TargetPath}"
-                                                           TextTrimming="CharacterEllipsis" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource Status}" Width="220">
+                                                        Width="130"
+                                                        MinWidth="110" />
+                                    <DataGridTemplateColumn Header="{DynamicResource Status}" Width="180" MinWidth="140">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="10"
@@ -550,14 +572,28 @@
                                                                FontSize="14"
                                                                FontWeight="SemiBold"
                                                                TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="200" />
+                                                               MaxWidth="160" />
                                                 </Border>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="{DynamicResource Result}" Width="1.4*" MinWidth="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding ResultPath}"
+                                                           ToolTip="{Binding TargetPath}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="{DynamicResource Size}"
+                                                        Binding="{Binding FileSizeText}"
+                                                        Width="76"
+                                                        MinWidth="60" />
                                     <DataGridTextColumn Header="{DynamicResource Time}"
                                                         Binding="{Binding ExecutionTimeText}"
-                                                        Width="72" />
+                                                        Width="68"
+                                                        MinWidth="55" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>
@@ -625,14 +661,28 @@
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
-                                <Button Grid.Column="1"
-                                        Content="{Binding ResultActionText}"
-                                        Style="{StaticResource SecondaryButtonStyle}"
-                                        Margin="12,0,0,0"
-                                        MinWidth="190"
-                                        VerticalAlignment="Center"
-                                        IsEnabled="{Binding CanOpenResult}"
-                                        Click="OpenResultButton_Click" />
+                                <StackPanel Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Margin="12,0,0,0">
+                                    <Button Content="{Binding ResultActionText}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            MinWidth="180"
+                                            Margin="0,0,0,8"
+                                            IsEnabled="{Binding CanOpenResult}"
+                                            Click="OpenResultButton_Click" />
+                                    <Button Content="{DynamicResource OpenReport}"
+                                            Style="{StaticResource CompactButtonStyle}"
+                                            MinWidth="180"
+                                            Margin="0,0,0,8"
+                                            IsEnabled="{Binding CanOpenReport}"
+                                            Click="OpenReportButton_Click"
+                                            Visibility="{Binding CanOpenReport, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <Button Content="{DynamicResource CopyList}"
+                                            Style="{StaticResource CompactButtonStyle}"
+                                            MinWidth="180"
+                                            IsEnabled="{Binding CanCopyConversionList}"
+                                            Click="CopyConversionListButton_Click" />
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </Grid>

@@ -35,8 +35,8 @@ public sealed class ConversionProcessor(IConversionAdapterResolver adapterResolv
                     readyTotal,
                     operation.RelativePath,
                     OperationStatus.Converting,
-                    OperationPercent: 10, WorksheetName: operation.WorksheetName));
-                var operationPercent = 10;
+                    OperationPercent: null, WorksheetName: operation.WorksheetName));
+                int? operationPercent = null;
 
                 ConversionResult result;
                 var adapter = adapterResolver.Resolve(operation.SourceFormat, operation.Target);
@@ -55,8 +55,8 @@ public sealed class ConversionProcessor(IConversionAdapterResolver adapterResolv
                     {
                         var stageProgress = new InlineProgress<int>(percent =>
                         {
-                            var next = Math.Clamp(percent, operationPercent, 99);
-                            if (next == operationPercent)
+                            var next = Math.Clamp(percent, operationPercent ?? 0, 99);
+                            if (operationPercent.HasValue && next == operationPercent.Value)
                                 return;
 
                             operationPercent = next;

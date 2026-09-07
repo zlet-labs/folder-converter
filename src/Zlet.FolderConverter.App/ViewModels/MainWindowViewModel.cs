@@ -520,8 +520,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public LocalizationService Localization => _localization;
     private string _reportStatusKey = string.Empty;
     public string ReportStatusText => string.IsNullOrEmpty(_reportStatusKey) ? string.Empty : L(_reportStatusKey);
-    public void SetReportStatus(bool success)
+    private string _reportPath = string.Empty;
+    public string ReportPath
     {
+        get => _reportPath;
+        set
+        {
+            if (_reportPath == value) return;
+            _reportPath = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanOpenReport));
+        }
+    }
+    public bool CanOpenReport => !string.IsNullOrWhiteSpace(_reportPath) && File.Exists(_reportPath) && _reportPath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase);
+
+    public void SetReportStatus(bool success, string? reportPath = null)
+    {
+        ReportPath = success && !string.IsNullOrWhiteSpace(reportPath) ? reportPath : string.Empty;
         _reportStatusKey = success ? "ReportWritten" : ZipPublicationFailed ? "ZipPublicationReportSkipped" : "ReportFailed";
         if (success && SelectedOutputMode == OutputMode.Zip)
         {
@@ -529,6 +544,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CanOpenResult));
         }
         OnPropertyChanged(nameof(ReportStatusText));
+        OnPropertyChanged(nameof(CanOpenReport));
     }
     public string WorksheetSummaryText
     {
@@ -723,6 +739,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         IsStopping = false;
         IsConverting = true;
         HasFinalReport = false;
+        ReportPath = string.Empty;
         CopyListStatus = string.Empty;
         _copiedListCount = null;
         _copyListWasEmpty = false;
@@ -1020,6 +1037,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         ClearCompletedConversionTiming();
         HasFinalReport = false;
+        ReportPath = string.Empty;
         if (SelectedOutputMode == OutputMode.Folder)
         {
             _folderOutputEdited = false;
@@ -1167,7 +1185,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var row = Operations[index];
         if (progress.Status == OperationStatus.Converting)
         {
-            row.BeginExecution(_timeProvider.GetTimestamp(), progress.OperationPercent ?? 10);
+            row.BeginExecution(_timeProvider.GetTimestamp(), progress.OperationPercent);
         }
         else if (progress.Result is not null)
         {
@@ -1223,6 +1241,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         ConflictCount = 0;
         ErrorCount = 0;
         HasFinalReport = false;
+        ReportPath = string.Empty;
         CopyListStatus = string.Empty;
         _copiedListCount = null;
         _copyListWasEmpty = false;
