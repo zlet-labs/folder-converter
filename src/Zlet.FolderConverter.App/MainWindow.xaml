@@ -503,7 +503,18 @@
                                 BorderThickness="0,0,0,1"
                                 Padding="14,7"
                                 Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <StackPanel Orientation="Horizontal">
+                            <DockPanel>
+                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                    <TextBlock Text="{Binding CopyListStatus}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,14,0"
+                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{Binding SelectionSummary}"
+                                               VerticalAlignment="Center"
+                                               FontWeight="SemiBold"
+                                               Foreground="#70E4FF" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
                                     <Button Content="{DynamicResource SelectAll}"
                                             Style="{StaticResource CompactButtonStyle}"
                                             Margin="0,0,8,0"
@@ -519,7 +530,50 @@
                                             Margin="0,0,8,0"
                                             IsEnabled="{Binding CanChangeSettings}"
                                             Click="InvertSelectionButton_Click" />
-                            </StackPanel>
+                                    <Button Content="{DynamicResource CopyList}"
+                                            Style="{StaticResource CompactButtonStyle}"
+                                            IsEnabled="{Binding CanCopyConversionList}"
+                                            Click="CopyConversionListButton_Click" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
+                        <Border Grid.Row="3"
+                                Margin="12,8,12,0"
+                                Padding="12,6"
+                                CornerRadius="6"
+                                Background="#4420334D"
+                                BorderBrush="#2D4566"
+                                BorderThickness="1">
+                            <Grid VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Office"
+                                           Margin="0,0,12,0"
+                                           VerticalAlignment="Center"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#70E4FF" />
+                                <WrapPanel Grid.Column="1"
+                                           VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding WordOfficeStatus}"
+                                               Margin="0,0,16,0"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding ExcelOfficeStatus}"
+                                               Margin="0,0,16,0"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding PowerPointOfficeStatus}"
+                                               VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="SemiBold" />
+                                </WrapPanel>
+                            </Grid>
                         </Border>
 
                         <Grid Grid.Row="4">
