@@ -227,7 +227,7 @@ public partial class MainWindow : Window
         }
         catch
         {
-            _viewModel.AddLocalizedError("OpenResultFailed");
+            _viewModel.AddLocalizedError("OpenReportFailed");
         }
     }
 

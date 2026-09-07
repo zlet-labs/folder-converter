@@ -42,12 +42,11 @@
             </Ellipse.Effect>
         </Ellipse>
 
-        <Grid Margin="20">
+        <Grid Margin="16,14,16,14">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="2,0,2,14">
@@ -97,7 +96,7 @@
 
             <Border Grid.Row="1"
                     Style="{StaticResource GlassPanelStyle}"
-                    Margin="0,0,0,12"
+                    Margin="0,0,0,10"
                     Padding="14,11">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -174,156 +173,245 @@
 
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="390" MinWidth="340" MaxWidth="460" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" MinWidth="480" />
+                    <ColumnDefinition Width="360" MinWidth="310" MaxWidth="440" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" MinWidth="440" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0"
-                        Style="{StaticResource GlassPanelStyle}"
-                        Padding="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Grid Margin="14,12,14,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="26"
-                                    Height="26"
-                                    CornerRadius="13"
-                                    Background="#6D4AFF"
-                                    Margin="0,0,9,0">
-                                <TextBlock Text="2"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontWeight="Bold" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Rules}"
-                                           FontSize="17"
-                                           FontWeight="SemiBold" />
-                                <TextBlock Text="{DynamicResource RulesDescription}"
-                                           FontSize="14"
-                                           Foreground="{StaticResource TextTertiaryBrush}" />
-                            </StackPanel>
-                        </Grid>
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" MinHeight="160" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="1">
-                            <TextBlock Text="{DynamicResource EmptyRules}"
-                                       Margin="16"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource TextTertiaryBrush}"
-                                       Visibility="{Binding HasRules, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                            <DataGrid ItemsSource="{Binding FormatRules}"
-                                      AutoGenerateColumns="False"
-                                      HeadersVisibility="Column"
-                                      BorderThickness="0"
-                                      RowHeight="52"
-                                      RowDetailsVisibilityMode="Visible"
-                                      IsReadOnly="True"
-                                      Visibility="{Binding HasRules, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <DataGrid.RowDetailsTemplate>
-                                    <DataTemplate>
-                                        <Border Margin="12,-5,12,8"
-                                                Padding="10,6"
-                                                CornerRadius="6"
-                                                Background="#6B17243A"
-                                                Visibility="{Binding HasExtensionBreakdown, Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <TextBlock Text="{Binding ExtensionBreakdown}"
-                                                       ToolTip="{Binding ExtensionBreakdown}"
-                                                       FontSize="14"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       TextWrapping="Wrap" />
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGrid.RowDetailsTemplate>
-                                <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="{DynamicResource Format}" Width="95" MinWidth="80">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel VerticalAlignment="Center"
-                                                            Margin="10,0,0,0">
-                                                    <TextBlock Text="{Binding FormatLabel}"
-                                                               FontWeight="SemiBold"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource Found}" Width="56">
-                                        <DataGridTemplateColumn.HeaderStyle>
-                                            <Style TargetType="DataGridColumnHeader"
-                                                   BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                                <Setter Property="HorizontalContentAlignment" Value="Center" />
-                                                <Setter Property="Padding" Value="4,0" />
-                                            </Style>
-                                        </DataGridTemplateColumn.HeaderStyle>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Count}"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           TextAlignment="Center" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource Action}" Width="*" MinWidth="175">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Grid VerticalAlignment="Center" Margin="4,0,8,0">
-                                                    <ComboBox ItemsSource="{Binding Targets}"
-                                                              SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
-                                                              IsEnabled="{Binding DataContext.CanChangeRules, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                              HorizontalAlignment="Stretch"
-                                                              Visibility="{Binding HasMultipleTargets, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
-                                                    <Border Background="#252A3D"
-                                                            BorderBrush="#3D4566"
-                                                            BorderThickness="1"
-                                                            CornerRadius="6"
-                                                            Padding="8,5"
-                                                            HorizontalAlignment="Stretch"
-                                                            ToolTipService.ShowDuration="10000"
-                                                            Visibility="{Binding IsSingleAction, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                        <Border.ToolTip>
-                                                            <ToolTip Background="#1F2437" BorderBrush="#3D4566" Foreground="#E2E8F0">
-                                                                <StackPanel MaxWidth="280">
-                                                                    <TextBlock Text="{Binding SingleActionTooltip}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                                    <TextBlock Text="{Binding SingleActionReason}" Margin="0,4,0,0" FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap" />
-                                                                </StackPanel>
-                                                            </ToolTip>
-                                                        </Border.ToolTip>
-                                                        <Grid>
+                    <Border Grid.Row="0"
+                            Style="{StaticResource GlassPanelStyle}"
+                            Padding="0"
+                            Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid Margin="14,12,14,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="26"
+                                        Height="26"
+                                        CornerRadius="13"
+                                        Background="#6D4AFF"
+                                        Margin="0,0,9,0">
+                                    <TextBlock Text="2"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{DynamicResource Rules}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{DynamicResource RulesDescription}"
+                                               FontSize="14"
+                                               Foreground="{StaticResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Grid.Row="1">
+                                <TextBlock Text="{DynamicResource EmptyRules}"
+                                           Margin="16"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource TextTertiaryBrush}"
+                                           Visibility="{Binding HasRules, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                <DataGrid ItemsSource="{Binding FormatRules}"
+                                          AutoGenerateColumns="False"
+                                          HeadersVisibility="Column"
+                                          BorderThickness="0"
+                                          RowHeight="52"
+                                          RowDetailsVisibilityMode="Visible"
+                                          IsReadOnly="True"
+                                          Visibility="{Binding HasRules, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <DataGrid.RowDetailsTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="12,-5,12,8"
+                                                    Padding="10,6"
+                                                    CornerRadius="6"
+                                                    Background="#6B17243A"
+                                                    Visibility="{Binding HasExtensionBreakdown, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="{Binding ExtensionBreakdown}"
+                                                           ToolTip="{Binding ExtensionBreakdown}"
+                                                           FontSize="14"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGrid.RowDetailsTemplate>
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="{DynamicResource Format}" Width="90" MinWidth="75">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel VerticalAlignment="Center"
+                                                                Margin="10,0,0,0">
+                                                        <TextBlock Text="{Binding FormatLabel}"
+                                                                   FontWeight="SemiBold"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="{DynamicResource Found}" Width="50" MinWidth="42">
+                                            <DataGridTemplateColumn.HeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader"
+                                                       BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                                    <Setter Property="Padding" Value="2,0" />
+                                                </Style>
+                                            </DataGridTemplateColumn.HeaderStyle>
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Count}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               TextAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="{DynamicResource Action}" Width="*" MinWidth="165">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Grid VerticalAlignment="Center" Margin="4,0,8,0">
+                                                        <ComboBox ItemsSource="{Binding Targets}"
+                                                                  SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding DataContext.CanChangeRules, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                  HorizontalAlignment="Stretch"
+                                                                  Visibility="{Binding HasMultipleTargets, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+                                                        <Border Background="#1C2234"
+                                                                BorderBrush="#2D3748"
+                                                                BorderThickness="1"
+                                                                CornerRadius="6"
+                                                                Padding="10,5"
+                                                                HorizontalAlignment="Stretch"
+                                                                ToolTipService.ShowDuration="10000"
+                                                                Visibility="{Binding IsSingleAction, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            <Border.ToolTip>
+                                                                <ToolTip Background="#1F2437" BorderBrush="#3D4566" Foreground="#E2E8F0">
+                                                                    <StackPanel MaxWidth="280">
+                                                                        <TextBlock Text="{Binding SingleActionTooltip}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                                        <TextBlock Text="{Binding SingleActionReason}" Margin="0,4,0,0" FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap" />
+                                                                    </StackPanel>
+                                                                </ToolTip>
+                                                            </Border.ToolTip>
                                                             <TextBlock Text="{Binding SelectedTarget.Label}"
-                                                                       Foreground="#94A3B8"
+                                                                       Foreground="#8896AB"
+                                                                       FontWeight="Medium"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        VerticalAlignment="Center" />
-                                                            <Path Data="M 0 0 L 4 4 L 8 0 Z"
-                                                                  Fill="#64748B"
-                                                                  HorizontalAlignment="Right"
-                                                                  VerticalAlignment="Center"
-                                                                  Margin="0,0,4,0"
-                                                                  Opacity="0.4" />
-                                                        </Grid>
-                                                    </Border>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                                        </Border>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </Border>
+                    </Border>
+
+                    <Border Grid.Row="1"
+                            Style="{StaticResource GlassPanelStyle}"
+                            Padding="14,12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="26"
+                                        Height="26"
+                                        CornerRadius="13"
+                                        Background="#0284C7"
+                                        Margin="0,0,9,0">
+                                    <TextBlock Text="3"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{DynamicResource DestinationTitle}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{DynamicResource DestinationDescription}"
+                                               FontSize="14"
+                                               Foreground="{StaticResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Grid.Row="1" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="6" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="6" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox ItemsSource="{Binding OutputModes}"
+                                          SelectedItem="{Binding SelectedOutputModeOption}"
+                                          IsEnabled="{Binding CanChangeSettings}"
+                                          Height="36">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Grid.Column="2"
+                                        Content="{Binding OutputBrowseButtonText}"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        IsEnabled="{Binding CanChangeSettings}"
+                                        Click="ChooseOutputButton_Click"
+                                        Height="36" />
+                                <Button Grid.Column="4"
+                                        Content="{DynamicResource Reset}"
+                                        Style="{StaticResource CompactButtonStyle}"
+                                        IsEnabled="{Binding CanChangeSettings}"
+                                        Click="ResetOutputButton_Click"
+                                        Height="36" />
+                            </Grid>
+
+                            <Grid Grid.Row="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBox Text="{Binding OutputPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="{Binding OutputPath}"
+                                         Height="38"
+                                         Padding="10,0"
+                                         VerticalContentAlignment="Center"
+                                         IsEnabled="{Binding CanChangeSettings}" />
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding OutputPathError}"
+                                           Foreground="#FF9AAA"
+                                           FontSize="12"
+                                           Margin="2,3,0,0"
+                                           Visibility="{Binding HasOutputPathError, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
 
                 <Border Grid.Column="2"
                         Style="{StaticResource GlassPanelStyle}"
@@ -334,7 +422,8 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" MinHeight="130" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
@@ -349,7 +438,7 @@
                                     CornerRadius="13"
                                     Background="#228BF4"
                                     Margin="0,0,9,0">
-                                <TextBlock Text="3"
+                                <TextBlock Text="4"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            FontWeight="Bold" />
@@ -364,7 +453,7 @@
                                            TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <ComboBox Grid.Column="2"
-                                      Width="172"
+                                      Width="160"
                                       ItemsSource="{Binding PreviewFilters}"
                                       SelectedItem="{Binding SelectedPreviewFilter}">
                                 <ComboBox.ItemTemplate>
@@ -414,18 +503,7 @@
                                 BorderThickness="0,0,0,1"
                                 Padding="14,7"
                                 Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <DockPanel>
-                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                                    <TextBlock Text="{Binding CopyListStatus}"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,14,0"
-                                               Foreground="{StaticResource TextSecondaryBrush}" />
-                                    <TextBlock Text="{Binding SelectionSummary}"
-                                               VerticalAlignment="Center"
-                                               FontWeight="SemiBold"
-                                               Foreground="#70E4FF" />
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal">
                                     <Button Content="{DynamicResource SelectAll}"
                                             Style="{StaticResource CompactButtonStyle}"
                                             Margin="0,0,8,0"
@@ -441,60 +519,7 @@
                                             Margin="0,0,8,0"
                                             IsEnabled="{Binding CanChangeSettings}"
                                             Click="InvertSelectionButton_Click" />
-                                    <Button Content="{DynamicResource CopyList}"
-                                            Style="{StaticResource CompactButtonStyle}"
-                                            IsEnabled="{Binding CanCopyConversionList}"
-                                            Click="CopyConversionListButton_Click" />
-                                </StackPanel>
-                            </DockPanel>
-                        </Border>
-
-                        <Border Grid.Row="3"
-                                Margin="12,10,12,0"
-                                Padding="14,10"
-                                CornerRadius="8"
-                                Background="#5520334D"
-                                BorderBrush="#36527A"
-                                BorderThickness="1">
-                            <Grid VerticalAlignment="Center">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Office"
-                                           Width="44"
-                                           Margin="0,0,10,0"
-                                           TextAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="14"
-                                           LineHeight="20"
-                                           LineStackingStrategy="BlockLineHeight"
-                                           FontWeight="Bold"
-                                           Foreground="#70E4FF" />
-                                <WrapPanel Grid.Column="1"
-                                           VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding WordOfficeStatus}"
-                                               Margin="0,0,18,0"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               LineHeight="20"
-                                               LineStackingStrategy="BlockLineHeight"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding ExcelOfficeStatus}"
-                                               Margin="0,0,18,0"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               LineHeight="20"
-                                               LineStackingStrategy="BlockLineHeight"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding PowerPointOfficeStatus}"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               LineHeight="20"
-                                               LineStackingStrategy="BlockLineHeight"
-                                               FontWeight="SemiBold" />
-                                </WrapPanel>
-                            </Grid>
+                            </StackPanel>
                         </Border>
 
                         <Grid Grid.Row="4">
@@ -512,7 +537,7 @@
                                       BorderThickness="0"
                                       Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="" Width="40">
+                                    <DataGridTemplateColumn Header="" Width="34">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -522,7 +547,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource SourceFile}" Width="1.8*" MinWidth="130">
+                                    <DataGridTemplateColumn Header="{DynamicResource SourceFile}" Width="2*" MinWidth="95">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding FilePath}"
@@ -533,13 +558,13 @@
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="{DynamicResource Action}"
                                                         Binding="{Binding ActionLabel}"
-                                                        Width="130"
-                                                        MinWidth="110" />
-                                    <DataGridTemplateColumn Header="{DynamicResource Status}" Width="180" MinWidth="140">
+                                                        Width="110"
+                                                        MinWidth="85" />
+                                    <DataGridTemplateColumn Header="{DynamicResource Status}" Width="140" MinWidth="95">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="10"
-                                                        Padding="10,4"
+                                                        Padding="8,4"
                                                         MinHeight="28"
                                                         HorizontalAlignment="Left"
                                                         ToolTip="{Binding Message}">
@@ -572,12 +597,12 @@
                                                                FontSize="14"
                                                                FontWeight="SemiBold"
                                                                TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="160" />
+                                                               MaxWidth="125" />
                                                 </Border>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource Result}" Width="1.4*" MinWidth="120">
+                                    <DataGridTemplateColumn Header="{DynamicResource Result}" Width="1.2*" MinWidth="50">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding ResultPath}"
@@ -588,18 +613,118 @@
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="{DynamicResource Size}"
                                                         Binding="{Binding FileSizeText}"
-                                                        Width="76"
-                                                        MinWidth="60" />
+                                                        Width="58"
+                                                        MinWidth="40" />
                                     <DataGridTextColumn Header="{DynamicResource Time}"
                                                         Binding="{Binding ExecutionTimeText}"
-                                                        Width="68"
-                                                        MinWidth="55" />
+                                                        Width="54"
+                                                        MinWidth="36" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>
 
                         <Border Grid.Row="5"
-                                Margin="12"
+                                Background="#550A1323"
+                                BorderBrush="#16243A"
+                                BorderThickness="0,1,0,0"
+                                Padding="14,10">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectionSummary}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#70E4FF" />
+                                        <TextBlock Text="{Binding StateMessage}"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,2,0,0"
+                                                   Visibility="{Binding ShowProgress, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Content="{Binding ConvertButtonText}"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Height="42"
+                                            MinWidth="210"
+                                            IsEnabled="{Binding CanConvert}"
+                                            Click="ConvertButton_Click" />
+                                </Grid>
+                                <Border Grid.Row="1"
+                                        Margin="0,10,0,0"
+                                        Padding="12,10"
+                                        CornerRadius="8"
+                                        Background="#99132136"
+                                        BorderBrush="#36527A"
+                                        BorderThickness="1"
+                                        Visibility="{Binding ShowProgress, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{DynamicResource Conversion}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ProgressCountText}"
+                                                   Margin="16,0,0,0"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding ProgressPercentText}"
+                                                   Margin="16,0,0,0"
+                                                   FontWeight="Bold"
+                                                   Foreground="#70E4FF" />
+                                        <Button Grid.Column="3"
+                                                Content="{Binding StopButtonText}"
+                                                Style="{StaticResource CompactButtonStyle}"
+                                                Margin="16,-4,0,-4"
+                                                MinWidth="112"
+                                                IsEnabled="{Binding CanStop}"
+                                                Click="StopButton_Click" />
+                                        <ProgressBar Grid.Row="1"
+                                                     Grid.ColumnSpan="4"
+                                                     Height="8"
+                                                     Margin="0,7,0,7"
+                                                     Minimum="0"
+                                                     Maximum="100"
+                                                     Value="{Binding ProgressPercent, Mode=OneWay}" />
+                                        <TextBlock Grid.Row="2"
+                                                   Text="{Binding CurrentFileText}"
+                                                   ToolTip="{Binding CurrentFile}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Row="2"
+                                                   Grid.Column="1"
+                                                   Text="{Binding ElapsedTimeText}"
+                                                   Margin="16,0,0,0"
+                                                   Foreground="{StaticResource TextTertiaryBrush}" />
+                                        <TextBlock Grid.Row="2"
+                                                   Grid.Column="2"
+                                                   Text="{Binding RemainingTimeText}"
+                                                   Margin="16,0,0,0"
+                                                   Foreground="{StaticResource TextTertiaryBrush}" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="6"
+                                Margin="12,6,12,12"
                                 Padding="12"
                                 CornerRadius="8"
                                 Background="#9920334D"
@@ -688,145 +813,6 @@
                     </Grid>
                 </Border>
             </Grid>
-
-            <Border Grid.Row="3"
-                    Style="{StaticResource GlassPanelStyle}"
-                    Margin="0,12,0,0"
-                    Padding="14,10">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="132" />
-                        <ColumnDefinition Width="106" />
-                        <ColumnDefinition Width="205" />
-                    </Grid.ColumnDefinitions>
-                    <ComboBox Width="130"
-                              Height="42"
-                              VerticalAlignment="Top"
-                              ItemsSource="{Binding OutputModes}"
-                              SelectedItem="{Binding SelectedOutputModeOption}"
-                              IsEnabled="{Binding CanChangeSettings}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Label}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <Grid Grid.Column="1" Margin="10,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <TextBox Text="{Binding OutputPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="{Binding OutputPath}"
-                                 Height="42"
-                                 Padding="10,0"
-                                 VerticalContentAlignment="Center"
-                                 IsEnabled="{Binding CanChangeSettings}" />
-                        <TextBlock Grid.Row="1"
-                                   Text="{Binding OutputPathError}"
-                                   Foreground="#FF9AAA"
-                                   FontSize="12"
-                                   Margin="2,3,0,0"
-                                   Visibility="{Binding HasOutputPathError, Converter={StaticResource BoolToVisibilityConverter}}" />
-                    </Grid>
-                    <Button Grid.Column="2"
-                            Content="{Binding OutputBrowseButtonText}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Margin="0,0,8,0"
-                            VerticalAlignment="Top"
-                            IsEnabled="{Binding CanChangeSettings}"
-                            Click="ChooseOutputButton_Click" />
-                    <Button Grid.Column="3"
-                            Content="{DynamicResource Reset}"
-                            Style="{StaticResource CompactButtonStyle}"
-                            Margin="0,0,10,0"
-                            VerticalAlignment="Top"
-                            IsEnabled="{Binding CanChangeSettings}"
-                            Click="ResetOutputButton_Click" />
-                    <StackPanel Grid.Column="4"
-                                VerticalAlignment="Top">
-                        <Button Content="{Binding ConvertButtonText}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                MinWidth="205"
-                                IsEnabled="{Binding CanConvert}"
-                                Click="ConvertButton_Click" />
-                        <TextBlock Text="{Binding SelectionSummary}"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,4,0,0"
-                                   FontSize="12"
-                                   Foreground="{StaticResource TextTertiaryBrush}" />
-                    </StackPanel>
-                    <Border Grid.Row="1"
-                            Grid.ColumnSpan="5"
-                            Margin="0,10,0,0"
-                            Padding="12,10"
-                            CornerRadius="8"
-                            Background="#99132136"
-                            BorderBrush="#36527A"
-                            BorderThickness="1"
-                            Visibility="{Binding ShowProgress, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="{DynamicResource Conversion}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding ProgressCountText}"
-                                       Margin="16,0,0,0"
-                                       Foreground="{StaticResource TextSecondaryBrush}" />
-                            <TextBlock Grid.Column="2"
-                                       Text="{Binding ProgressPercentText}"
-                                       Margin="16,0,0,0"
-                                       FontWeight="Bold"
-                                       Foreground="#70E4FF" />
-                            <Button Grid.Column="3"
-                                    Content="{Binding StopButtonText}"
-                                    Style="{StaticResource CompactButtonStyle}"
-                                    Margin="16,-4,0,-4"
-                                    MinWidth="112"
-                                    IsEnabled="{Binding CanStop}"
-                                    Click="StopButton_Click" />
-                            <ProgressBar Grid.Row="1"
-                                         Grid.ColumnSpan="4"
-                                         Height="8"
-                                         Margin="0,7,0,7"
-                                         Minimum="0"
-                                         Maximum="100"
-                                         Value="{Binding ProgressPercent, Mode=OneWay}" />
-                            <TextBlock Grid.Row="2"
-                                       Text="{Binding CurrentFileText}"
-                                       ToolTip="{Binding CurrentFile}"
-                                       TextTrimming="CharacterEllipsis"
-                                       Foreground="{StaticResource TextSecondaryBrush}" />
-                            <TextBlock Grid.Row="2"
-                                       Grid.Column="1"
-                                       Text="{Binding ElapsedTimeText}"
-                                       Margin="16,0,0,0"
-                                       Foreground="{StaticResource TextTertiaryBrush}" />
-                            <TextBlock Grid.Row="2"
-                                       Grid.Column="2"
-                                       Text="{Binding RemainingTimeText}"
-                                       Margin="16,0,0,0"
-                                       Foreground="{StaticResource TextTertiaryBrush}" />
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
         </Grid>
     </Grid>
 </Window>

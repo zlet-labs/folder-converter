@@ -86,6 +86,19 @@ public sealed class LocalizationTests : IDisposable
     }
 
     [Fact]
+    public void Open_report_failed_and_destination_keys_are_localized_and_accurate()
+    {
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+        Assert.Equal("Не удалось открыть отчёт.", localization.Get("OpenReportFailed"));
+        Assert.Equal("Назначение", localization.Get("DestinationTitle"));
+        Assert.Equal("Куда сохранить результаты", localization.Get("DestinationDescription"));
+        localization.Apply(AppLanguage.English);
+        Assert.Equal("Could not open the report.", localization.Get("OpenReportFailed"));
+        Assert.Equal("Destination", localization.Get("DestinationTitle"));
+        Assert.Equal("Where to save results", localization.Get("DestinationDescription"));
+    }
+
+    [Fact]
     public void Settings_update_preserves_unrelated_values()
     {
         var store = Store();
