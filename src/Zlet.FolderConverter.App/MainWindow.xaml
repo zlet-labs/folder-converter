@@ -248,12 +248,12 @@
                                         </DataTemplate>
                                     </DataGrid.RowDetailsTemplate>
                                     <DataGrid.Columns>
-                                        <DataGridTemplateColumn Header="{DynamicResource Format}" Width="92" MinWidth="76">
+                                        <DataGridTemplateColumn Header="{DynamicResource Format}" Width="80" MinWidth="68">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal"
                                                                 VerticalAlignment="Center"
-                                                                Margin="8,0,0,0">
+                                                                Margin="6,0,0,0">
                                                         <Border Style="{StaticResource RuleFormatBadgeStyle}">
                                                             <Path Style="{StaticResource RuleFormatIconStyle}" />
                                                         </Border>
@@ -266,12 +266,12 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTemplateColumn Header="{DynamicResource Found}" Width="50" MinWidth="42">
+                                        <DataGridTemplateColumn Header="{DynamicResource Found}" Width="38" MinWidth="32">
                                             <DataGridTemplateColumn.HeaderStyle>
                                                 <Style TargetType="DataGridColumnHeader"
                                                        BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
                                                     <Setter Property="HorizontalContentAlignment" Value="Center" />
-                                                    <Setter Property="Padding" Value="2,0" />
+                                                    <Setter Property="Padding" Value="1,0" />
                                                 </Style>
                                             </DataGridTemplateColumn.HeaderStyle>
                                             <DataGridTemplateColumn.CellTemplate>
@@ -283,10 +283,10 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTemplateColumn Header="{DynamicResource Action}" Width="*" MinWidth="165">
+                                        <DataGridTemplateColumn Header="{DynamicResource Action}" Width="*" MinWidth="180">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Grid VerticalAlignment="Center" Margin="4,0,8,0">
+                                                    <Grid VerticalAlignment="Center" Margin="2,0,4,0">
                                                         <ComboBox ItemsSource="{Binding Targets}"
                                                                   SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
                                                                   IsEnabled="{Binding DataContext.CanChangeRules, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -302,7 +302,7 @@
                                                                 BorderBrush="#2D3748"
                                                                 BorderThickness="1"
                                                                 CornerRadius="6"
-                                                                Padding="10,5"
+                                                                Padding="7,5"
                                                                 HorizontalAlignment="Stretch"
                                                                 ToolTipService.ShowDuration="10000"
                                                                 Visibility="{Binding IsSingleAction, Converter={StaticResource BoolToVisibilityConverter}}">
