@@ -105,6 +105,12 @@ public sealed class PresentationTests : IDisposable
             .FirstOrDefault(s => s.Property == System.Windows.FrameworkElement.HorizontalAlignmentProperty);
         Assert.NotNull(alignmentSetter);
         Assert.Equal(System.Windows.HorizontalAlignment.Left, alignmentSetter.Value);
+
+        var cellStyle = (System.Windows.Style)styles[typeof(System.Windows.Controls.DataGridCell)];
+        var cellHAlign = cellStyle.Setters.OfType<System.Windows.Setter>()
+            .FirstOrDefault(s => s.Property == System.Windows.Controls.Control.HorizontalContentAlignmentProperty);
+        Assert.NotNull(cellHAlign);
+        Assert.Equal(System.Windows.HorizontalAlignment.Stretch, cellHAlign.Value);
     }
 
     [Theory]
@@ -143,12 +149,17 @@ public sealed class PresentationTests : IDisposable
                     VerticalAlignment = System.Windows.VerticalAlignment.Center,
                     Child = textBlock
                 };
+                var grid = new System.Windows.Controls.Grid
+                {
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch
+                };
+                grid.Children.Add(border);
 
                 // In DataGridCell with Padding="11,6" (22px horizontal)
                 double cellAvailableWidth = Math.Max(0, columnWidth - 22);
 
-                border.Measure(new System.Windows.Size(cellAvailableWidth, double.PositiveInfinity));
-                border.Arrange(new System.Windows.Rect(0, 0, cellAvailableWidth, border.DesiredSize.Height));
+                grid.Measure(new System.Windows.Size(cellAvailableWidth, double.PositiveInfinity));
+                grid.Arrange(new System.Windows.Rect(0, 0, cellAvailableWidth, grid.DesiredSize.Height));
 
                 Assert.True(border.ActualWidth <= cellAvailableWidth,
                     $"Border actual width ({border.ActualWidth}) exceeded cell available width ({cellAvailableWidth})");

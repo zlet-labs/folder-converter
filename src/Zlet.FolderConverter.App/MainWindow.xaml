@@ -617,11 +617,13 @@
                                     <DataGridTemplateColumn Header="{DynamicResource Status}" Width="140" MinWidth="95">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Border Style="{StaticResource StatusChipBorderStyle}"
-                                                        ToolTip="{Binding Message}">
-                                                    <TextBlock Text="{Binding Status}"
-                                                               Style="{StaticResource StatusChipTextStyle}" />
-                                                </Border>
+                                                <Grid HorizontalAlignment="Stretch">
+                                                    <Border Style="{StaticResource StatusChipBorderStyle}"
+                                                            ToolTip="{Binding Message}">
+                                                        <TextBlock Text="{Binding Status}"
+                                                                   Style="{StaticResource StatusChipTextStyle}" />
+                                                    </Border>
+                                                </Grid>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>

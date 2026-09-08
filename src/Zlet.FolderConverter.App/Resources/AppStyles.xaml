@@ -373,6 +373,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="11,6" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="Transparent" />
