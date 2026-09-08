@@ -85,7 +85,101 @@ public sealed class PresentationTests : IDisposable
         {
             Assert.True(styles.Contains(key), $"Missing resource key: {key}");
         }
+
+        var chipTextStyle = (System.Windows.Style)styles["StatusChipTextStyle"];
+        Assert.DoesNotContain(
+            chipTextStyle.Setters.OfType<System.Windows.Setter>(),
+            s => s.Property == System.Windows.FrameworkElement.MaxWidthProperty);
+
+        var trimmingSetter = chipTextStyle.Setters.OfType<System.Windows.Setter>()
+            .FirstOrDefault(s => s.Property == System.Windows.Controls.TextBlock.TextTrimmingProperty);
+        Assert.NotNull(trimmingSetter);
+        Assert.Equal(System.Windows.TextTrimming.CharacterEllipsis, trimmingSetter.Value);
+
+        var chipBorderStyle = (System.Windows.Style)styles["StatusChipBorderStyle"];
+        Assert.DoesNotContain(
+            chipBorderStyle.Setters.OfType<System.Windows.Setter>(),
+            s => s.Property == System.Windows.FrameworkElement.MaxWidthProperty);
+
+        var alignmentSetter = chipBorderStyle.Setters.OfType<System.Windows.Setter>()
+            .FirstOrDefault(s => s.Property == System.Windows.FrameworkElement.HorizontalAlignmentProperty);
+        Assert.NotNull(alignmentSetter);
+        Assert.Equal(System.Windows.HorizontalAlignment.Left, alignmentSetter.Value);
     }
+
+    [Theory]
+    [InlineData("Готово к преобразованию", 95, false)]
+    [InlineData("Готово к преобразованию", 140, false)]
+    [InlineData("Готово к преобразованию", 260, true)]
+    [InlineData("Копировать без изменений", 260, true)]
+    [InlineData("Ready to convert", 140, false)]
+    [InlineData("Ready to convert", 260, false)]
+    [InlineData("Copy without modification", 260, true)]
+    public void StatusChip_responsive_measurement_without_fixed_cap(
+        string statusText,
+        double columnWidth,
+        bool exceedsOldCapWhenWide)
+    {
+        Exception? threadEx = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var textBlock = new System.Windows.Controls.TextBlock
+                {
+                    Text = statusText,
+                    FontSize = 12,
+                    FontWeight = System.Windows.FontWeights.SemiBold,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                    TextTrimming = System.Windows.TextTrimming.CharacterEllipsis
+                };
+                var border = new System.Windows.Controls.Border
+                {
+                    CornerRadius = new System.Windows.CornerRadius(5),
+                    BorderThickness = new System.Windows.Thickness(1),
+                    Padding = new System.Windows.Thickness(7, 2, 7, 2),
+                    MinHeight = 22,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                    Child = textBlock
+                };
+
+                // In DataGridCell with Padding="11,6" (22px horizontal)
+                double cellAvailableWidth = Math.Max(0, columnWidth - 22);
+
+                border.Measure(new System.Windows.Size(cellAvailableWidth, double.PositiveInfinity));
+                border.Arrange(new System.Windows.Rect(0, 0, cellAvailableWidth, border.DesiredSize.Height));
+
+                Assert.True(border.ActualWidth <= cellAvailableWidth,
+                    $"Border actual width ({border.ActualWidth}) exceeded cell available width ({cellAvailableWidth})");
+
+                if (cellAvailableWidth > 200)
+                {
+                    Assert.True(border.ActualWidth < cellAvailableWidth,
+                        $"Border stretched across entire cell width ({cellAvailableWidth}) instead of staying compact");
+                }
+
+                if (exceedsOldCapWhenWide)
+                {
+                    Assert.True(border.ActualWidth > 126,
+                        $"Border actual width ({border.ActualWidth}) remained capped below 126px despite wide column ({columnWidth}px)");
+                }
+            }
+            catch (Exception ex)
+            {
+                threadEx = ex;
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        bool finished = thread.Join(3000);
+        Assert.True(finished, "Measurement thread timed out");
+        if (threadEx != null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(threadEx).Throw();
+        }
+    }
+
 
     [Fact]
     public void OperationRowViewModel_shows_running_powerpoint_message()

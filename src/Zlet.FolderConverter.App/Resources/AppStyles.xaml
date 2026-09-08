@@ -457,7 +457,6 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-        <Setter Property="MaxWidth" Value="126" />
         <Setter Property="Foreground" Value="{StaticResource UnavailableStatusForegroundBrush}" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding StatusTone}" Value="ReadyCopy">
