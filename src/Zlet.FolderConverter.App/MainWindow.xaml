@@ -637,6 +637,7 @@
                                       AutoGenerateColumns="False"
                                       BorderThickness="0"
                                       MinRowHeight="32"
+                                      CellStyle="{StaticResource PreviewDataGridCellStyle}"
                                       CanUserSortColumns="True"
                                       Sorting="OperationsDataGrid_Sorting"
                                       Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">

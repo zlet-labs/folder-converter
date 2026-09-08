@@ -51,12 +51,8 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
             if (_displayIndex == value) return;
             _displayIndex = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(DisplayIndexText));
-            OnPropertyChanged(nameof(RowNumber));
         }
     }
-    public int RowNumber => _displayIndex;
-    public string DisplayIndexText => _displayIndex > 0 ? _displayIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
 
     public bool IsSelected
     {

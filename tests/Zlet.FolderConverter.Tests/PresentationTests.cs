@@ -1797,8 +1797,6 @@ public sealed class PresentationTests : IDisposable
         for (var i = 0; i < visible.Length; i++)
         {
             Assert.Equal(i + 1, visible[i].DisplayIndex);
-            Assert.Equal(i + 1, visible[i].RowNumber);
-            Assert.Equal((i + 1).ToString(), visible[i].DisplayIndexText);
         }
     }
 
@@ -1819,15 +1817,9 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(2, visible.Length);
         Assert.Equal(1, visible[0].DisplayIndex);
         Assert.Equal(2, visible[1].DisplayIndex);
-        Assert.Equal("1", visible[0].DisplayIndexText);
-        Assert.Equal("2", visible[1].DisplayIndexText);
 
         var filteredOut = viewModel.Operations.Where(r => r.Operation.SourceFormat != SourceFormat.Pdf);
-        Assert.All(filteredOut, r =>
-        {
-            Assert.Equal(0, r.DisplayIndex);
-            Assert.Equal(string.Empty, r.DisplayIndexText);
-        });
+        Assert.All(filteredOut, r => Assert.Equal(0, r.DisplayIndex));
     }
 
     [Fact]
@@ -1976,6 +1968,7 @@ public sealed class PresentationTests : IDisposable
         var xaml = File.ReadAllText(xamlPath);
 
         Assert.Contains("MinRowHeight=\"32\"", xaml);
+        Assert.Contains("CellStyle=\"{StaticResource PreviewDataGridCellStyle}\"", xaml);
         Assert.Contains("<DataGridTemplateColumn Header=\"#\" Width=\"38\" MinWidth=\"32\" CanUserSort=\"False\">", xaml);
 
         var numberColIndex = xaml.IndexOf("Header=\"#\"", StringComparison.Ordinal);
@@ -1987,6 +1980,14 @@ public sealed class PresentationTests : IDisposable
         Assert.True(sourceFileColIndex > 0, "SourceFile column must exist");
         Assert.True(numberColIndex < checkboxColIndex, "Header=# must precede checkbox column");
         Assert.True(checkboxColIndex < sourceFileColIndex, "Checkbox column must precede SourceFile column");
+
+        // FormatRulesDataGrid must not use the Preview-specific cell style
+        var rulesGridIndex = xaml.IndexOf("x:Name=\"FormatRulesDataGrid\"", StringComparison.Ordinal);
+        var operationsGridIndex = xaml.IndexOf("x:Name=\"OperationsDataGrid\"", StringComparison.Ordinal);
+        Assert.True(rulesGridIndex > 0 && operationsGridIndex > rulesGridIndex);
+
+        var rulesGridSnippet = xaml.Substring(rulesGridIndex, operationsGridIndex - rulesGridIndex);
+        Assert.DoesNotContain("PreviewDataGridCellStyle", rulesGridSnippet);
     }
 
     [Fact]
@@ -1996,9 +1997,23 @@ public sealed class PresentationTests : IDisposable
         var stylesPath = Path.Combine(root, "src", "Zlet.FolderConverter.App", "Resources", "AppStyles.xaml");
         var styles = File.ReadAllText(stylesPath);
 
-        Assert.Contains("<Setter Property=\"VerticalContentAlignment\" Value=\"Center\" />", styles);
-        Assert.Contains("<ContentPresenter SnapsToDevicePixels=\"{TemplateBinding SnapsToDevicePixels}\"", styles);
-        Assert.Contains("VerticalAlignment=\"{TemplateBinding VerticalContentAlignment}\"", styles);
+        // Global DataGridCell style remains clean (ZC-039/main state) without custom ControlTemplate
+        var globalCellStyleIndex = styles.IndexOf("<Style TargetType=\"DataGridCell\">", StringComparison.Ordinal);
+        var previewCellStyleIndex = styles.IndexOf("<Style x:Key=\"PreviewDataGridCellStyle\"", StringComparison.Ordinal);
+        Assert.True(globalCellStyleIndex > 0);
+        Assert.True(previewCellStyleIndex > globalCellStyleIndex);
+
+        var globalCellSnippet = styles.Substring(globalCellStyleIndex, previewCellStyleIndex - globalCellStyleIndex);
+        Assert.Contains("<Setter Property=\"Padding\" Value=\"11,6\" />", globalCellSnippet);
+        Assert.DoesNotContain("ControlTemplate", globalCellSnippet);
+
+        // Preview-specific cell style overrides Padding and centers content vertically via ControlTemplate
+        var previewCellSnippet = styles.Substring(previewCellStyleIndex, styles.IndexOf("<Style x:Key=\"PreviewTextColumnElementStyle\"", StringComparison.Ordinal) - previewCellStyleIndex);
+        Assert.Contains("BasedOn=\"{StaticResource {x:Type DataGridCell}}\"", previewCellSnippet);
+        Assert.Contains("<Setter Property=\"Padding\" Value=\"10,4\" />", previewCellSnippet);
+        Assert.Contains("<ContentPresenter SnapsToDevicePixels=\"{TemplateBinding SnapsToDevicePixels}\"", previewCellSnippet);
+        Assert.Contains("VerticalAlignment=\"{TemplateBinding VerticalContentAlignment}\"", previewCellSnippet);
+
         Assert.Contains("<Style x:Key=\"PreviewTextColumnElementStyle\" TargetType=\"TextBlock\">", styles);
         Assert.Contains("<Setter Property=\"VerticalAlignment\" Value=\"Center\" />", styles);
     }
