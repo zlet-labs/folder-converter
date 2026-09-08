@@ -224,13 +224,35 @@
                                            TextWrapping="Wrap"
                                            Foreground="{StaticResource TextTertiaryBrush}"
                                            Visibility="{Binding HasRules, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                                <DataGrid ItemsSource="{Binding FormatRules}"
+                                <DataGrid x:Name="FormatRulesDataGrid"
+                                          ItemsSource="{Binding FormatRules}"
+                                          SelectedItem="{Binding SelectedRule, Mode=TwoWay}"
                                           AutoGenerateColumns="False"
                                           HeadersVisibility="Column"
                                           BorderThickness="0"
                                           RowHeight="52"
                                           IsReadOnly="True"
+                                          SelectionMode="Single"
+                                          PreviewMouseLeftButtonDown="FormatRules_PreviewMouseLeftButtonDown"
+                                          PreviewKeyDown="FormatRules_PreviewKeyDown"
                                           Visibility="{Binding HasRules, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                            <Setter Property="Cursor" Value="Hand" />
+                                            <Setter Property="BorderThickness" Value="2,0,0,0" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#252A4268" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#38253D66" />
+                                                    <Setter Property="BorderBrush" Value="#6D4AFF" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.RowStyle>
                                     <DataGrid.Columns>
                                         <DataGridTemplateColumn Header="{DynamicResource Format}" Width="80" MinWidth="68">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -261,9 +283,9 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding Count}"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               TextAlignment="Center" />
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                TextAlignment="Center" />
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -275,6 +297,7 @@
                                                                   SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
                                                                   IsEnabled="{Binding DataContext.CanChangeRules, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                   HorizontalAlignment="Stretch"
+                                                                  Cursor="Arrow"
                                                                   Visibility="{Binding HasMultipleTargets, Converter={StaticResource BoolToVisibilityConverter}}">
                                                             <ComboBox.ItemTemplate>
                                                                 <DataTemplate>
@@ -495,6 +518,11 @@
                                 Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
                             <DockPanel>
                                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                    <TextBlock Text="{Binding FilteredCountSummary}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,14,0"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               Visibility="{Binding IsPreviewFiltered, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     <TextBlock Text="{Binding CopyListStatus}"
                                                VerticalAlignment="Center"
                                                Margin="0,0,14,0"
