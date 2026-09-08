@@ -15,6 +15,7 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
     private TimeSpan? _liveExecutionElapsed;
     private int? _operationPercent;
     private bool _isNotSelected;
+    private int _displayIndex;
     private readonly LocalizationService _localization;
 
     public OperationRowViewModel(
@@ -42,6 +43,20 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
     public bool CanSelect => (Operation.Status is OperationStatus.Ready
         or OperationStatus.Cancelled or OperationStatus.NotProcessed);
     public bool IsNotSelected => _isNotSelected;
+    public int DisplayIndex
+    {
+        get => _displayIndex;
+        internal set
+        {
+            if (_displayIndex == value) return;
+            _displayIndex = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DisplayIndexText));
+            OnPropertyChanged(nameof(RowNumber));
+        }
+    }
+    public int RowNumber => _displayIndex;
+    public string DisplayIndexText => _displayIndex > 0 ? _displayIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty;
 
     public bool IsSelected
     {
