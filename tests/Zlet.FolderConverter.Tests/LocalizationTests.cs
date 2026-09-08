@@ -86,6 +86,153 @@ public sealed class LocalizationTests : IDisposable
     }
 
     [Fact]
+    public void Applying_english_changes_language_and_active_resource_dictionary()
+    {
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+        Assert.Equal("ru-RU", localization.Language);
+        Assert.Equal("Настройки", (string)localization.ActiveDictionary["SettingsTitle"]);
+
+        localization.Apply(AppLanguage.English);
+        Assert.Equal("en-US", localization.Language);
+        Assert.Equal("Settings", (string)localization.ActiveDictionary["SettingsTitle"]);
+        Assert.Equal("Browse", (string)localization.ActiveDictionary["Browse"]);
+        Assert.Equal("Rules", (string)localization.ActiveDictionary["Rules"]);
+        Assert.Equal("Destination", (string)localization.ActiveDictionary["DestinationTitle"]);
+        Assert.Equal("Copy", (string)localization.ActiveDictionary["Copy"]);
+    }
+
+    [Fact]
+    public void Active_wpf_resource_dictionary_resolves_dynamic_resources_after_apply()
+    {
+        var root = new System.Windows.ResourceDictionary();
+        var stylesUri = new Uri("/ZletConverter;component/Resources/AppStyles.xaml", UriKind.Relative);
+        root.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = stylesUri });
+
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+        localization.Apply(AppLanguage.Russian, root);
+
+        Assert.Equal("Настройки", (string)root["SettingsTitle"]);
+        Assert.Equal("Обзор", (string)root["Browse"]);
+        Assert.Equal("Правила", (string)root["Rules"]);
+        Assert.Equal("Назначение", (string)root["DestinationTitle"]);
+
+        localization.Apply(AppLanguage.English, root);
+
+        Assert.Equal("Settings", (string)root["SettingsTitle"]);
+        Assert.Equal("Browse", (string)root["Browse"]);
+        Assert.Equal("Rules", (string)root["Rules"]);
+        Assert.Equal("Destination", (string)root["DestinationTitle"]);
+    }
+
+    [Fact]
+    public void Applying_russian_replaces_english_rather_than_leaving_both_active()
+    {
+        var root = new System.Windows.ResourceDictionary();
+        var stylesUri = new Uri("/ZletConverter;component/Resources/AppStyles.xaml", UriKind.Relative);
+        root.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = stylesUri });
+
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+        localization.Apply(AppLanguage.English, root);
+
+        Assert.Single(root.MergedDictionaries.Where(LocalizationService.IsLanguageDictionary));
+        Assert.Equal("Settings", (string)root["SettingsTitle"]);
+
+        localization.Apply(AppLanguage.Russian, root);
+
+        Assert.Single(root.MergedDictionaries.Where(LocalizationService.IsLanguageDictionary));
+        Assert.Equal("Настройки", (string)root["SettingsTitle"]);
+        Assert.DoesNotContain(root.MergedDictionaries, d =>
+            d.Source is not null && d.Source.OriginalString.Contains("Strings.en-US", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Only_one_strings_resource_dictionary_is_active_even_with_legacy_duplicate_input()
+    {
+        var root = new System.Windows.ResourceDictionary();
+        var stylesUri = new Uri("/ZletConverter;component/Resources/AppStyles.xaml", UriKind.Relative);
+        root.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = stylesUri });
+        root.MergedDictionaries.Add(LocalizationService.CreateDictionary(AppLanguage.English));
+        root.MergedDictionaries.Add(LocalizationService.CreateDictionary(AppLanguage.Russian));
+
+        Assert.Equal(2, root.MergedDictionaries.Count(LocalizationService.IsLanguageDictionary));
+
+        LocalizationService.SynchronizeDictionaries(root.MergedDictionaries, LocalizationService.CreateDictionary(AppLanguage.English));
+
+        Assert.Single(root.MergedDictionaries.Where(LocalizationService.IsLanguageDictionary));
+        Assert.Equal("Settings", (string)root["SettingsTitle"]);
+        Assert.Equal(2, root.MergedDictionaries.Count);
+
+        LocalizationService.SynchronizeDictionaries(root.MergedDictionaries, LocalizationService.CreateDictionary(AppLanguage.Russian));
+
+        Assert.Single(root.MergedDictionaries.Where(LocalizationService.IsLanguageDictionary));
+        Assert.Equal("Настройки", (string)root["SettingsTitle"]);
+        Assert.Equal(2, root.MergedDictionaries.Count);
+    }
+
+    [Fact]
+    public void Switching_en_ru_en_remains_deterministic_and_keeps_single_dictionary()
+    {
+        var root = new System.Windows.ResourceDictionary();
+        var stylesUri = new Uri("/ZletConverter;component/Resources/AppStyles.xaml", UriKind.Relative);
+        root.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = stylesUri });
+
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+
+        for (var i = 0; i < 6; i++)
+        {
+            var targetLang = i % 2 == 0 ? AppLanguage.English : AppLanguage.Russian;
+            var expectedTitle = targetLang == AppLanguage.English ? "Settings" : "Настройки";
+            var expectedBrowse = targetLang == AppLanguage.English ? "Browse" : "Обзор";
+
+            localization.Apply(targetLang, root);
+
+            Assert.Equal(targetLang, localization.Language);
+            Assert.Single(root.MergedDictionaries.Where(LocalizationService.IsLanguageDictionary));
+            Assert.Equal(2, root.MergedDictionaries.Count);
+            Assert.Equal(expectedTitle, (string)root["SettingsTitle"]);
+            Assert.Equal(expectedBrowse, (string)root["Browse"]);
+            Assert.Equal(expectedTitle, (string)localization.ActiveDictionary["SettingsTitle"]);
+        }
+    }
+
+    [Theory]
+    [InlineData("ru-RU", "Настройки", "Обзор")]
+    [InlineData("en-US", "Settings", "Browse")]
+    public void Saved_language_startup_resolves_to_the_same_active_resource_language(string savedLang, string expectedTitle, string expectedBrowse)
+    {
+        var decision = StartupLanguageResolver.Resolve(null, savedLang);
+        Assert.Equal(savedLang, decision.Language);
+        Assert.False(decision.ChooserRequired);
+
+        var root = new System.Windows.ResourceDictionary();
+        var stylesUri = new Uri("/ZletConverter;component/Resources/AppStyles.xaml", UriKind.Relative);
+        root.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = stylesUri });
+
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+        localization.Apply(decision.Language!, root);
+
+        Assert.Equal(savedLang, localization.Language);
+        Assert.Single(root.MergedDictionaries.Where(LocalizationService.IsLanguageDictionary));
+        Assert.Equal(expectedTitle, (string)root["SettingsTitle"]);
+        Assert.Equal(expectedBrowse, (string)root["Browse"]);
+    }
+
+    [Fact]
+    public void IsLanguageDictionary_accurately_discriminates_strings_from_styles()
+    {
+        var styles = new System.Windows.ResourceDictionary
+        {
+            Source = new Uri("/ZletConverter;component/Resources/AppStyles.xaml", UriKind.Relative)
+        };
+        var en = LocalizationService.CreateDictionary(AppLanguage.English);
+        var ru = LocalizationService.CreateDictionary(AppLanguage.Russian);
+
+        Assert.False(LocalizationService.IsLanguageDictionary(styles));
+        Assert.True(LocalizationService.IsLanguageDictionary(en));
+        Assert.True(LocalizationService.IsLanguageDictionary(ru));
+    }
+
+    [Fact]
     public void Open_report_failed_and_destination_keys_are_localized_and_accurate()
     {
         var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
