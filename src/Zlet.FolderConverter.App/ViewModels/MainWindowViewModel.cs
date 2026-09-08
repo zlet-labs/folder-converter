@@ -131,7 +131,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool IsPowerPointOfficeAvailable => IsOfficeAvailable(OfficeApplicationKind.PowerPoint);
 
     public IEnumerable<OperationRowViewModel> VisibleOperations =>
-        Operations.Where(MatchesSelectedFilter).ToArray();
+        ApplySort(Operations.Where(MatchesSelectedFilter), _sortColumn, _sortDirection).ToArray();
 
     public string SelectedFolder
     {
@@ -362,6 +362,67 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             SelectRuleFilter(rule);
         }
+    }
+
+    public void ResetPreviewFilter()
+    {
+        var allOption = PreviewFilters.FirstOrDefault(o => o.Filter == PreviewFilter.All);
+        if (allOption is not null)
+        {
+            SelectedPreviewFilter = allOption;
+        }
+        else
+        {
+            SelectedRule = null;
+        }
+    }
+
+    private PreviewSortColumn _sortColumn = PreviewSortColumn.None;
+    private ListSortDirection _sortDirection = ListSortDirection.Ascending;
+
+    public PreviewSortColumn CurrentSortColumn => _sortColumn;
+    public ListSortDirection CurrentSortDirection => _sortDirection;
+
+    public void SortBy(PreviewSortColumn column)
+    {
+        if (_sortColumn == column)
+        {
+            _sortDirection = _sortDirection == ListSortDirection.Ascending
+                ? ListSortDirection.Descending
+                : ListSortDirection.Ascending;
+        }
+        else
+        {
+            _sortColumn = column;
+            _sortDirection = ListSortDirection.Ascending;
+        }
+
+        OnPropertyChanged(nameof(CurrentSortColumn));
+        OnPropertyChanged(nameof(CurrentSortDirection));
+        OnPropertyChanged(nameof(VisibleOperations));
+    }
+
+    public void SortBy(PreviewSortColumn column, ListSortDirection direction)
+    {
+        _sortColumn = column;
+        _sortDirection = direction;
+        OnPropertyChanged(nameof(CurrentSortColumn));
+        OnPropertyChanged(nameof(CurrentSortDirection));
+        OnPropertyChanged(nameof(VisibleOperations));
+    }
+
+    public void ClearSort()
+    {
+        if (_sortColumn == PreviewSortColumn.None && _sortDirection == ListSortDirection.Ascending)
+        {
+            return;
+        }
+
+        _sortColumn = PreviewSortColumn.None;
+        _sortDirection = ListSortDirection.Ascending;
+        OnPropertyChanged(nameof(CurrentSortColumn));
+        OnPropertyChanged(nameof(CurrentSortDirection));
+        OnPropertyChanged(nameof(VisibleOperations));
     }
 
     private void SetSelectedRuleInternal(RuleRowViewModel? rule)
@@ -1327,6 +1388,94 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _ => true
         };
 
+    private static IEnumerable<OperationRowViewModel> ApplySort(
+        IEnumerable<OperationRowViewModel> source,
+        PreviewSortColumn column,
+        ListSortDirection direction)
+    {
+        if (column == PreviewSortColumn.None)
+        {
+            return source;
+        }
+
+        var isAsc = direction == ListSortDirection.Ascending;
+
+        return column switch
+        {
+            PreviewSortColumn.SourceFile => isAsc
+                ? source.OrderBy(r => r.FilePath, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(r => r.Operation.OperationKey, StringComparer.OrdinalIgnoreCase)
+                : source.OrderByDescending(r => r.FilePath, StringComparer.OrdinalIgnoreCase)
+                        .ThenByDescending(r => r.Operation.OperationKey, StringComparer.OrdinalIgnoreCase),
+
+            PreviewSortColumn.Action => isAsc
+                ? source.OrderBy(GetActionSortKey, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(r => r.FilePath, StringComparer.OrdinalIgnoreCase)
+                : source.OrderByDescending(GetActionSortKey, StringComparer.OrdinalIgnoreCase)
+                        .ThenByDescending(r => r.FilePath, StringComparer.OrdinalIgnoreCase),
+
+            PreviewSortColumn.Status => isAsc
+                ? source.OrderBy(GetStatusSortRank)
+                        .ThenBy(r => r.FilePath, StringComparer.OrdinalIgnoreCase)
+                : source.OrderByDescending(GetStatusSortRank)
+                        .ThenByDescending(r => r.FilePath, StringComparer.OrdinalIgnoreCase),
+
+            PreviewSortColumn.Result => isAsc
+                ? source.OrderBy(r => r.ResultPath, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(r => r.FilePath, StringComparer.OrdinalIgnoreCase)
+                : source.OrderByDescending(r => r.ResultPath, StringComparer.OrdinalIgnoreCase)
+                        .ThenByDescending(r => r.FilePath, StringComparer.OrdinalIgnoreCase),
+
+            PreviewSortColumn.Size => isAsc
+                ? source.OrderBy(r => r.Operation.SourceSizeBytes)
+                        .ThenBy(r => r.FilePath, StringComparer.OrdinalIgnoreCase)
+                : source.OrderByDescending(r => r.Operation.SourceSizeBytes)
+                        .ThenByDescending(r => r.FilePath, StringComparer.OrdinalIgnoreCase),
+
+            PreviewSortColumn.Time => OrderByTime(source, isAsc),
+
+            _ => source
+        };
+    }
+
+    private static string GetActionSortKey(OperationRowViewModel row) =>
+        $"{row.Operation.SourceFormat} -> {row.Operation.Target}";
+
+    private static int GetStatusSortRank(OperationRowViewModel row)
+    {
+        if (row.IsNotSelected) return 10;
+        return row.Operation.Status switch
+        {
+            OperationStatus.Ready => 1,
+            OperationStatus.Converting => 2,
+            OperationStatus.Succeeded => 3,
+            OperationStatus.Skipped => 4,
+            OperationStatus.Conflict => 5,
+            OperationStatus.EngineUnavailable => 6,
+            OperationStatus.Unsupported => 7,
+            OperationStatus.Failed => 8,
+            OperationStatus.Cancelled => 9,
+            OperationStatus.NotProcessed => 11,
+            _ => 99
+        };
+    }
+
+    private static IOrderedEnumerable<OperationRowViewModel> OrderByTime(
+        IEnumerable<OperationRowViewModel> source,
+        bool isAsc)
+    {
+        if (isAsc)
+        {
+            return source.OrderBy(r => !r.ExecutionElapsed.HasValue)
+                         .ThenBy(r => r.ExecutionElapsed?.Ticks ?? 0)
+                         .ThenBy(r => r.FilePath, StringComparer.OrdinalIgnoreCase);
+        }
+
+        return source.OrderBy(r => !r.ExecutionElapsed.HasValue)
+                     .ThenByDescending(r => r.ExecutionElapsed?.Ticks ?? 0)
+                     .ThenByDescending(r => r.FilePath, StringComparer.OrdinalIgnoreCase);
+    }
+
     private void InvalidateScan(string messageKey)
     {
         if (IsBusy || _lastScan is null)
@@ -1367,8 +1516,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         ClearCompletedConversionTiming();
         ResultFolder = string.Empty;
         SetSelectedRuleInternal(null);
+        _sortColumn = PreviewSortColumn.None;
+        _sortDirection = ListSortDirection.Ascending;
         RebuildLocalizedOptions();
         _selectedPreviewFilter = PreviewFilters[0];
+        OnPropertyChanged(nameof(CurrentSortColumn));
+        OnPropertyChanged(nameof(CurrentSortDirection));
         OnPropertyChanged(nameof(SelectedPreviewFilter));
         OnPropertyChanged(nameof(IsPreviewFiltered));
         OnPropertyChanged(nameof(FilteredCountSummary));

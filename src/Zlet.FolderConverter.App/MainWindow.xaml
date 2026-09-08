@@ -465,16 +465,26 @@
                                            Foreground="{StaticResource TextTertiaryBrush}"
                                            TextTrimming="CharacterEllipsis" />
                             </StackPanel>
-                            <ComboBox Grid.Column="2"
-                                      Width="160"
-                                      ItemsSource="{Binding PreviewFilters}"
-                                      SelectedItem="{Binding SelectedPreviewFilter}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Label}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                            <StackPanel Grid.Column="2"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <Button x:Name="ShowAllButton"
+                                        Content="{DynamicResource ShowAll}"
+                                        Style="{StaticResource CompactButtonStyle}"
+                                        Height="38"
+                                        Margin="0,0,8,0"
+                                        Visibility="{Binding IsPreviewFiltered, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Click="ShowAllButton_Click" />
+                                <ComboBox Width="160"
+                                          ItemsSource="{Binding PreviewFilters}"
+                                          SelectedItem="{Binding SelectedPreviewFilter}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Label}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
                         </Grid>
 
                         <Border Grid.Row="1"
@@ -622,12 +632,15 @@
                                        Foreground="{StaticResource TextTertiaryBrush}"
                                        Visibility="{Binding HasPreview, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
 
-                            <DataGrid ItemsSource="{Binding VisibleOperations}"
+                            <DataGrid x:Name="OperationsDataGrid"
+                                      ItemsSource="{Binding VisibleOperations}"
                                       AutoGenerateColumns="False"
                                       BorderThickness="0"
+                                      CanUserSortColumns="True"
+                                      Sorting="OperationsDataGrid_Sorting"
                                       Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="" Width="34">
+                                    <DataGridTemplateColumn Header="" Width="34" CanUserSort="False">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -637,7 +650,11 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource SourceFile}" Width="2*" MinWidth="95">
+                                    <DataGridTemplateColumn Header="{DynamicResource SourceFile}"
+                                                            Width="2*"
+                                                            MinWidth="95"
+                                                            CanUserSort="True"
+                                                            SortMemberPath="SourceFile">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding FilePath}"
@@ -649,8 +666,14 @@
                                     <DataGridTextColumn Header="{DynamicResource Action}"
                                                         Binding="{Binding ActionLabel}"
                                                         Width="110"
-                                                        MinWidth="85" />
-                                    <DataGridTemplateColumn Header="{DynamicResource Status}" Width="140" MinWidth="95">
+                                                        MinWidth="85"
+                                                        CanUserSort="True"
+                                                        SortMemberPath="Action" />
+                                    <DataGridTemplateColumn Header="{DynamicResource Status}"
+                                                            Width="140"
+                                                            MinWidth="95"
+                                                            CanUserSort="True"
+                                                            SortMemberPath="Status">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid HorizontalAlignment="Stretch">
@@ -663,7 +686,11 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="{DynamicResource Result}" Width="1.2*" MinWidth="50">
+                                    <DataGridTemplateColumn Header="{DynamicResource Result}"
+                                                            Width="1.2*"
+                                                            MinWidth="50"
+                                                            CanUserSort="True"
+                                                            SortMemberPath="Result">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding ResultPath}"
@@ -675,11 +702,15 @@
                                     <DataGridTextColumn Header="{DynamicResource Size}"
                                                         Binding="{Binding FileSizeText}"
                                                         Width="58"
-                                                        MinWidth="40" />
+                                                        MinWidth="40"
+                                                        CanUserSort="True"
+                                                        SortMemberPath="Size" />
                                     <DataGridTextColumn Header="{DynamicResource Time}"
                                                         Binding="{Binding ExecutionTimeText}"
                                                         Width="54"
-                                                        MinWidth="36" />
+                                                        MinWidth="36"
+                                                        CanUserSort="True"
+                                                        SortMemberPath="Time" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>

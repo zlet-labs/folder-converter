@@ -85,8 +85,10 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
         : !string.IsNullOrWhiteSpace(Operation.ResultRelativePath)
             ? Operation.ResultRelativePath
             : Path.ChangeExtension(Operation.RelativePath, Operation.TargetExtension);
+    public long SourceSizeBytes => Operation.SourceSizeBytes;
+    public TimeSpan? ExecutionElapsed => _executionElapsed ?? _liveExecutionElapsed;
     public string FileSizeText => _localization.FormatFileSize(Operation.SourceSizeBytes);
-    public string ExecutionTimeText => (_executionElapsed ?? _liveExecutionElapsed) is { } elapsed
+    public string ExecutionTimeText => ExecutionElapsed is { } elapsed
         ? _localization.FormatExecutionTime(elapsed)
         : "—";
     public string Status

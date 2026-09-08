@@ -2,6 +2,7 @@ using Zlet.FolderConverter.App.Localization;
 using Zlet.FolderConverter.App.ViewModels;
 using Zlet.FolderConverter.Core.Models;
 using Zlet.FolderConverter.Core.Services;
+using System.ComponentModel;
 using System.IO.Compression;
 using System.Security.Cryptography;
 
@@ -1305,6 +1306,347 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal("Shown: 2 of 3", viewModel.FilteredCountSummary);
 
         localization.Apply(AppLanguage.Russian);
+    }
+
+    [Fact]
+    public async Task ResetPreviewFilter_clears_active_filter_and_rule_and_restores_all_items()
+    {
+        Write("manual.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        Write("document.docx", "PK");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.True(viewModel.IsPreviewFiltered);
+        Assert.Single(viewModel.VisibleOperations);
+        Assert.True(pdfRule.IsSelected);
+        Assert.Equal(pdfRule, viewModel.SelectedRule);
+
+        viewModel.ResetPreviewFilter();
+
+        Assert.False(viewModel.IsPreviewFiltered);
+        Assert.Equal(PreviewFilter.All, viewModel.SelectedPreviewFilter.Filter);
+        Assert.Null(viewModel.SelectedRule);
+        Assert.False(pdfRule.IsSelected);
+        Assert.Equal(3, viewModel.VisibleOperations.Count());
+    }
+
+    [Fact]
+    public async Task ResetPreviewFilter_clears_status_based_preview_filter()
+    {
+        Write("manual.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var convertFilter = viewModel.PreviewFilters.First(f => f.Filter == PreviewFilter.Convert);
+        viewModel.SelectedPreviewFilter = convertFilter;
+        Assert.True(viewModel.IsPreviewFiltered);
+
+        viewModel.ResetPreviewFilter();
+        Assert.False(viewModel.IsPreviewFiltered);
+        Assert.Equal(PreviewFilter.All, viewModel.SelectedPreviewFilter.Filter);
+    }
+
+    [Fact]
+    public void ShowAll_string_resource_exists_in_russian_and_english()
+    {
+        var localization = LocalizationService.Current;
+        localization.Apply(AppLanguage.Russian);
+        Assert.Equal("Показать все", localization.Get("ShowAll"));
+
+        localization.Apply(AppLanguage.English);
+        Assert.Equal("Show all", localization.Get("ShowAll"));
+
+        localization.Apply(AppLanguage.Russian);
+    }
+
+    [Fact]
+    public async Task Preview_sort_by_size_uses_numeric_bytes_not_string()
+    {
+        // Sizes: 1 MB, 10 MB, 2 MB
+        // In string comparison: "1 MB" < "10 MB" < "2 MB"
+        // In numeric comparison: 1 MB < 2 MB < 10 MB
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "file-1mb.bin"), "file-1mb.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, "", SourceSizeBytes: 1024 * 1024),
+            new PlannedOperation(Path.Combine(_rootPath, "file-10mb.bin"), "file-10mb.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, "", SourceSizeBytes: 10 * 1024 * 1024),
+            new PlannedOperation(Path.Combine(_rootPath, "file-2mb.bin"), "file-2mb.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, "", SourceSizeBytes: 2 * 1024 * 1024),
+        };
+
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Ascending);
+
+        var visibleAsc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("file-1mb.bin", visibleAsc[0].FilePath);
+        Assert.Equal("file-2mb.bin", visibleAsc[1].FilePath);
+        Assert.Equal("file-10mb.bin", visibleAsc[2].FilePath);
+
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Descending);
+        var visibleDesc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("file-10mb.bin", visibleDesc[0].FilePath);
+        Assert.Equal("file-2mb.bin", visibleDesc[1].FilePath);
+        Assert.Equal("file-1mb.bin", visibleDesc[2].FilePath);
+    }
+
+    [Fact]
+    public async Task Preview_sort_by_time_uses_numeric_duration_and_handles_nulls_safely()
+    {
+        var timeProvider = new ManualTimeProvider();
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "fast.bin"), "fast.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "slow.bin"), "slow.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "notime.bin"), "notime.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+        };
+
+        var viewModel = CreateStatusViewModel(ops, timeProvider: timeProvider);
+        await viewModel.ScanAsync();
+
+        // Fast row takes 1 second
+        var fastRow = viewModel.Operations[0];
+        fastRow.BeginExecution(timeProvider.GetTimestamp());
+        timeProvider.Advance(TimeSpan.FromSeconds(1));
+        fastRow.CompleteExecution(new ConversionResult(fastRow.Operation, OperationStatus.Succeeded, "ok"), timeProvider, timeProvider.GetTimestamp());
+
+        // Slow row takes 10 seconds
+        var slowRow = viewModel.Operations[1];
+        slowRow.BeginExecution(timeProvider.GetTimestamp());
+        timeProvider.Advance(TimeSpan.FromSeconds(10));
+        slowRow.CompleteExecution(new ConversionResult(slowRow.Operation, OperationStatus.Succeeded, "ok"), timeProvider, timeProvider.GetTimestamp());
+
+        // notime.bin has null execution elapsed
+
+        // Sort ascending: fast (1s) < slow (10s), then unmeasured
+        viewModel.SortBy(PreviewSortColumn.Time, ListSortDirection.Ascending);
+        var visibleAsc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("fast.bin", visibleAsc[0].FilePath);
+        Assert.Equal("slow.bin", visibleAsc[1].FilePath);
+        Assert.Equal("notime.bin", visibleAsc[2].FilePath);
+
+        // Sort descending: slow (10s) > fast (1s), then unmeasured
+        viewModel.SortBy(PreviewSortColumn.Time, ListSortDirection.Descending);
+        var visibleDesc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("slow.bin", visibleDesc[0].FilePath);
+        Assert.Equal("fast.bin", visibleDesc[1].FilePath);
+        Assert.Equal("notime.bin", visibleDesc[2].FilePath);
+    }
+
+    [Fact]
+    public async Task Preview_sort_by_source_file_is_case_insensitive_and_deterministic()
+    {
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "b.txt"), "b.txt", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "A.txt"), "A.txt", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "c.txt"), "c.txt", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+        };
+
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+        viewModel.SortBy(PreviewSortColumn.SourceFile, ListSortDirection.Ascending);
+
+        var visibleAsc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("A.txt", visibleAsc[0].FilePath);
+        Assert.Equal("b.txt", visibleAsc[1].FilePath);
+        Assert.Equal("c.txt", visibleAsc[2].FilePath);
+
+        viewModel.SortBy(PreviewSortColumn.SourceFile, ListSortDirection.Descending);
+        var visibleDesc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("c.txt", visibleDesc[0].FilePath);
+        Assert.Equal("b.txt", visibleDesc[1].FilePath);
+        Assert.Equal("A.txt", visibleDesc[2].FilePath);
+    }
+
+    [Fact]
+    public async Task Preview_sort_by_action_and_status_uses_stable_internal_values_independent_of_locale()
+    {
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "failed.bin"), "failed.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Failed, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "ready.bin"), "ready.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "succeeded.bin"), "succeeded.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Succeeded, ""),
+        };
+
+        var localization = LocalizationService.Current;
+        localization.Apply(AppLanguage.Russian);
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+
+        viewModel.SortBy(PreviewSortColumn.Status, ListSortDirection.Ascending);
+        var ruOrder = viewModel.VisibleOperations.Select(r => r.FilePath).ToArray();
+
+        localization.Apply(AppLanguage.English);
+        var enOrder = viewModel.VisibleOperations.Select(r => r.FilePath).ToArray();
+
+        Assert.Equal(ruOrder, enOrder);
+        Assert.Equal("ready.bin", ruOrder[0]);
+        Assert.Equal("succeeded.bin", ruOrder[1]);
+        Assert.Equal("failed.bin", ruOrder[2]);
+
+        localization.Apply(AppLanguage.Russian);
+    }
+
+    [Fact]
+    public async Task Preview_sort_by_result_is_deterministic()
+    {
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "c.doc"), "c.doc", SourceFormat.Doc, ConversionTarget.Docx, ".docx", Path.Combine(_rootPath, "c.docx"), true, OperationStatus.Ready, "", ResultRelativePath: "out_c.docx"),
+            new PlannedOperation(Path.Combine(_rootPath, "a.doc"), "a.doc", SourceFormat.Doc, ConversionTarget.Docx, ".docx", Path.Combine(_rootPath, "a.docx"), true, OperationStatus.Ready, "", ResultRelativePath: "out_a.docx"),
+            new PlannedOperation(Path.Combine(_rootPath, "b.doc"), "b.doc", SourceFormat.Doc, ConversionTarget.Docx, ".docx", Path.Combine(_rootPath, "b.docx"), true, OperationStatus.Ready, "", ResultRelativePath: "out_b.docx"),
+        };
+
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+        viewModel.SortBy(PreviewSortColumn.Result, ListSortDirection.Ascending);
+
+        var visibleAsc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("out_a.docx", visibleAsc[0].ResultPath);
+        Assert.Equal("out_b.docx", visibleAsc[1].ResultPath);
+        Assert.Equal("out_c.docx", visibleAsc[2].ResultPath);
+
+        viewModel.SortBy(PreviewSortColumn.Result, ListSortDirection.Descending);
+        var visibleDesc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("out_c.docx", visibleDesc[0].ResultPath);
+        Assert.Equal("out_b.docx", visibleDesc[1].ResultPath);
+        Assert.Equal("out_a.docx", visibleDesc[2].ResultPath);
+    }
+
+    [Fact]
+    public async Task Preview_sorting_toggles_asc_then_desc()
+    {
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "b.txt"), "b.txt", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, "", SourceSizeBytes: 100),
+            new PlannedOperation(Path.Combine(_rootPath, "a.txt"), "a.txt", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, "", SourceSizeBytes: 200),
+        };
+
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+        Assert.Equal(PreviewSortColumn.None, viewModel.CurrentSortColumn);
+
+        viewModel.SortBy(PreviewSortColumn.Size);
+        Assert.Equal(PreviewSortColumn.Size, viewModel.CurrentSortColumn);
+        Assert.Equal(ListSortDirection.Ascending, viewModel.CurrentSortDirection);
+        Assert.Equal("b.txt", viewModel.VisibleOperations.First().FilePath);
+
+        viewModel.SortBy(PreviewSortColumn.Size);
+        Assert.Equal(PreviewSortColumn.Size, viewModel.CurrentSortColumn);
+        Assert.Equal(ListSortDirection.Descending, viewModel.CurrentSortDirection);
+        Assert.Equal("a.txt", viewModel.VisibleOperations.First().FilePath);
+
+        viewModel.SortBy(PreviewSortColumn.SourceFile);
+        Assert.Equal(PreviewSortColumn.SourceFile, viewModel.CurrentSortColumn);
+        Assert.Equal(ListSortDirection.Ascending, viewModel.CurrentSortDirection);
+        Assert.Equal("a.txt", viewModel.VisibleOperations.First().FilePath);
+    }
+
+    [Fact]
+    public async Task Filter_and_sort_interaction_preserves_sort_across_filter_switches_and_reset()
+    {
+        Write("p1.pdf", "%PDF-1.7 A");
+        Write("p2.pdf", "%PDF-1.7 AAA");
+        Write("c1.csv", "1");
+        Write("c2.csv", "12345");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        var csvRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Csv);
+
+        // 1. Filter to PDF
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.Equal(2, viewModel.VisibleOperations.Count());
+
+        // 2. Sort by Size descending
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Descending);
+        var pdfSorted = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("p2.pdf", pdfSorted[0].FilePath);
+        Assert.Equal("p1.pdf", pdfSorted[1].FilePath);
+
+        // 3. Switch filter to CSV -> sort remains Size descending!
+        viewModel.SelectRuleFilter(csvRule);
+        var csvSorted = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("c2.csv", csvSorted[0].FilePath);
+        Assert.Equal("c1.csv", csvSorted[1].FilePath);
+
+        // 4. Click Show all (ResetPreviewFilter) -> all 4 files returned, still Size descending!
+        viewModel.ResetPreviewFilter();
+        var allSorted = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(4, allSorted.Length);
+        Assert.Equal(PreviewSortColumn.Size, viewModel.CurrentSortColumn);
+        Assert.Equal(ListSortDirection.Descending, viewModel.CurrentSortDirection);
+        for (int i = 0; i < allSorted.Length - 1; i++)
+        {
+            Assert.True(allSorted[i].SourceSizeBytes >= allSorted[i + 1].SourceSizeBytes);
+        }
+    }
+
+    [Fact]
+    public async Task Preview_sorting_and_filtering_preserves_selection_and_execution_set()
+    {
+        Write("p1.pdf", "%PDF-1.7");
+        Write("p2.pdf", "%PDF-1.7");
+        Write("c1.csv", "a");
+        Write("c2.csv", "b");
+        var recordingProcessor = new RecordingProcessor();
+        var resolver = new DefaultConversionAdapterResolver();
+        var viewModel = new MainWindowViewModel(
+            new FileSystemFolderScanner(),
+            new ConversionPlanner(resolver),
+            conversionProcessor: recordingProcessor)
+        {
+            SelectedFolder = _rootPath
+        };
+        await viewModel.ScanAsync();
+
+        // Check 2 files only
+        viewModel.ClearSelection();
+        viewModel.Operations[0].IsSelected = true;
+        viewModel.Operations[2].IsSelected = true;
+        Assert.Equal(2, viewModel.SelectedReadyCount);
+
+        // Filter to PDF -> only 1 of the selected files is visible
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.Equal(2, viewModel.VisibleOperations.Count());
+        Assert.Equal(2, viewModel.SelectedReadyCount); // Total selected is still 2!
+
+        // Sort by Size descending
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Descending);
+        Assert.Equal(2, viewModel.SelectedReadyCount);
+
+        // Clear filter
+        viewModel.ResetPreviewFilter();
+        Assert.Equal(4, viewModel.VisibleOperations.Count());
+        Assert.Equal(2, viewModel.SelectedReadyCount);
+        Assert.True(viewModel.Operations[0].IsSelected);
+        Assert.False(viewModel.Operations[1].IsSelected);
+        Assert.True(viewModel.Operations[2].IsSelected);
+        Assert.False(viewModel.Operations[3].IsSelected);
+
+        // Global SelectAll works on all 4 files even under sort
+        viewModel.SelectAll();
+        Assert.Equal(4, viewModel.SelectedReadyCount);
+        Assert.All(viewModel.Operations, op => Assert.True(op.IsSelected));
+
+        // Global ClearSelection works on all 4 files
+        viewModel.ClearSelection();
+        Assert.Equal(0, viewModel.SelectedReadyCount);
+        Assert.All(viewModel.Operations, op => Assert.False(op.IsSelected));
+
+        // Global InvertSelection works on all 4 files
+        viewModel.InvertSelection();
+        Assert.Equal(4, viewModel.SelectedReadyCount);
+        Assert.All(viewModel.Operations, op => Assert.True(op.IsSelected));
+
+        // ConvertAsync processes all checked files
+        await viewModel.ConvertAsync();
+        Assert.Equal(4, recordingProcessor.Received.Count);
     }
 
     public void Dispose()

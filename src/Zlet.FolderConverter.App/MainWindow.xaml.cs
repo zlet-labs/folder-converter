@@ -29,6 +29,14 @@ public partial class MainWindow : Window
             new ConversionPlanner(resolver),
             new ConversionProcessor(resolver),
             capabilityDetector);
+        _viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName is nameof(MainWindowViewModel.CurrentSortColumn)
+                or nameof(MainWindowViewModel.CurrentSortDirection))
+            {
+                SyncDataGridSortIndicators();
+            }
+        };
         DataContext = _viewModel;
     }
 
@@ -89,6 +97,43 @@ public partial class MainWindow : Window
 
     private void InvertSelectionButton_Click(object sender, RoutedEventArgs e) =>
         _viewModel.InvertSelection();
+
+    private void ShowAllButton_Click(object sender, RoutedEventArgs e) =>
+        _viewModel.ResetPreviewFilter();
+
+    private void OperationsDataGrid_Sorting(object sender, System.Windows.Controls.DataGridSortingEventArgs e)
+    {
+        e.Handled = true;
+        if (Enum.TryParse<PreviewSortColumn>(e.Column.SortMemberPath, out var column))
+        {
+            _viewModel.SortBy(column);
+            SyncDataGridSortIndicators();
+        }
+    }
+
+    private void SyncDataGridSortIndicators()
+    {
+        if (OperationsDataGrid is null)
+        {
+            return;
+        }
+
+        var activeSortMember = _viewModel.CurrentSortColumn == PreviewSortColumn.None
+            ? null
+            : _viewModel.CurrentSortColumn.ToString();
+
+        foreach (var column in OperationsDataGrid.Columns)
+        {
+            if (column.SortMemberPath == activeSortMember)
+            {
+                column.SortDirection = _viewModel.CurrentSortDirection;
+            }
+            else
+            {
+                column.SortDirection = null;
+            }
+        }
+    }
 
     private void CopyConversionListButton_Click(object sender, RoutedEventArgs e)
     {
