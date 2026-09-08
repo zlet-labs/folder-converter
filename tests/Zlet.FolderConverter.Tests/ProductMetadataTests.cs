@@ -75,6 +75,31 @@ public sealed class ProductMetadataTests
     }
 
     [Fact]
+    public void Main_window_and_styles_declare_format_and_office_badges()
+    {
+        var root = FindRepositoryRoot();
+        var appDirectory = Path.Combine(root, "src", "Zlet.FolderConverter.App");
+        var mainWindow = File.ReadAllText(Path.Combine(appDirectory, "MainWindow.xaml"));
+        var styles = File.ReadAllText(Path.Combine(appDirectory, "Resources", "AppStyles.xaml"));
+
+        Assert.Contains("RuleFormatBadgeStyle", mainWindow);
+        Assert.Contains("RuleFormatIconStyle", mainWindow);
+        Assert.Contains("OfficeWordBadgeStyle", mainWindow);
+        Assert.Contains("OfficeExcelBadgeStyle", mainWindow);
+        Assert.Contains("OfficePowerPointBadgeStyle", mainWindow);
+
+        Assert.Contains("DocumentIconGeometry", styles);
+        Assert.Contains("SpreadsheetIconGeometry", styles);
+        Assert.Contains("PresentationIconGeometry", styles);
+        Assert.Contains("PdfIconGeometry", styles);
+        Assert.Contains("JsonIconGeometry", styles);
+        Assert.Contains("TextDataIconGeometry", styles);
+        Assert.Contains("ImageIconGeometry", styles);
+        Assert.Contains("EbookIconGeometry", styles);
+        Assert.Contains("GenericFileIconGeometry", styles);
+    }
+
+    [Fact]
     public void App_uses_one_product_icon_for_executable_window_and_taskbar()
     {
         var root = FindRepositoryRoot();

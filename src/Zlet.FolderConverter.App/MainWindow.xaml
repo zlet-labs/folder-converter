@@ -248,13 +248,19 @@
                                         </DataTemplate>
                                     </DataGrid.RowDetailsTemplate>
                                     <DataGrid.Columns>
-                                        <DataGridTemplateColumn Header="{DynamicResource Format}" Width="90" MinWidth="75">
+                                        <DataGridTemplateColumn Header="{DynamicResource Format}" Width="92" MinWidth="76">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel VerticalAlignment="Center"
-                                                                Margin="10,0,0,0">
+                                                    <StackPanel Orientation="Horizontal"
+                                                                VerticalAlignment="Center"
+                                                                Margin="8,0,0,0">
+                                                        <Border Style="{StaticResource RuleFormatBadgeStyle}">
+                                                            <Path Style="{StaticResource RuleFormatIconStyle}" />
+                                                        </Border>
                                                         <TextBlock Text="{Binding FormatLabel}"
+                                                                   ToolTip="{Binding FormatLabel}"
                                                                    FontWeight="SemiBold"
+                                                                   VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
                                                 </DataTemplate>
@@ -558,20 +564,38 @@
                                            Foreground="#70E4FF" />
                                 <WrapPanel Grid.Column="1"
                                            VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding WordOfficeStatus}"
-                                               Margin="0,0,16,0"
-                                               VerticalAlignment="Center"
-                                               FontSize="13"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding ExcelOfficeStatus}"
-                                               Margin="0,0,16,0"
-                                               VerticalAlignment="Center"
-                                               FontSize="13"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding PowerPointOfficeStatus}"
-                                               VerticalAlignment="Center"
-                                               FontSize="13"
-                                               FontWeight="SemiBold" />
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="0,0,16,0"
+                                                VerticalAlignment="Center">
+                                        <Border Style="{StaticResource OfficeWordBadgeStyle}">
+                                            <TextBlock Text="W" Style="{StaticResource OfficeBadgeTextStyle}" />
+                                        </Border>
+                                        <TextBlock Text="{Binding WordOfficeStatus}"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="0,0,16,0"
+                                                VerticalAlignment="Center">
+                                        <Border Style="{StaticResource OfficeExcelBadgeStyle}">
+                                            <TextBlock Text="X" Style="{StaticResource OfficeBadgeTextStyle}" />
+                                        </Border>
+                                        <TextBlock Text="{Binding ExcelOfficeStatus}"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                VerticalAlignment="Center">
+                                        <Border Style="{StaticResource OfficePowerPointBadgeStyle}">
+                                            <TextBlock Text="P" Style="{StaticResource OfficeBadgeTextStyle}" />
+                                        </Border>
+                                        <TextBlock Text="{Binding PowerPointOfficeStatus}"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold" />
+                                    </StackPanel>
                                 </WrapPanel>
                             </Grid>
                         </Border>

@@ -41,6 +41,7 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public SourceFormat SourceFormat { get; }
+    public FormatSemanticFamily SemanticFamily => SourceFormat.GetSemanticFamily();
     public string FormatLabel => SourceFormat switch
     {
         SourceFormat.Image => _localization.Get("FormatImage"),

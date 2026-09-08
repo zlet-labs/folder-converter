@@ -1024,6 +1024,78 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(string.Empty, viewModel.ReportPath);
     }
 
+    [Theory]
+    [InlineData(SourceFormat.Doc, FormatSemanticFamily.Document)]
+    [InlineData(SourceFormat.Docx, FormatSemanticFamily.Document)]
+    [InlineData(SourceFormat.Odt, FormatSemanticFamily.Document)]
+    [InlineData(SourceFormat.Xls, FormatSemanticFamily.Spreadsheet)]
+    [InlineData(SourceFormat.Xlsx, FormatSemanticFamily.Spreadsheet)]
+    [InlineData(SourceFormat.Ods, FormatSemanticFamily.Spreadsheet)]
+    [InlineData(SourceFormat.Ppt, FormatSemanticFamily.Presentation)]
+    [InlineData(SourceFormat.Pptx, FormatSemanticFamily.Presentation)]
+    [InlineData(SourceFormat.Odp, FormatSemanticFamily.Presentation)]
+    [InlineData(SourceFormat.Pdf, FormatSemanticFamily.Pdf)]
+    [InlineData(SourceFormat.Json, FormatSemanticFamily.DataCode)]
+    [InlineData(SourceFormat.Csv, FormatSemanticFamily.TextData)]
+    [InlineData(SourceFormat.Tsv, FormatSemanticFamily.TextData)]
+    [InlineData(SourceFormat.Image, FormatSemanticFamily.Image)]
+    [InlineData(SourceFormat.Epub, FormatSemanticFamily.Ebook)]
+    [InlineData(SourceFormat.Archive, FormatSemanticFamily.Generic)]
+    [InlineData(SourceFormat.Unknown, FormatSemanticFamily.Generic)]
+    public void SourceFormat_maps_to_expected_semantic_family(SourceFormat format, FormatSemanticFamily expectedFamily)
+    {
+        Assert.Equal(expectedFamily, format.GetSemanticFamily());
+    }
+
+    [Fact]
+    public void RuleRowViewModel_exposes_semantic_family_matching_source_format()
+    {
+        var docxRule = new RuleRowViewModel(FormatCapabilityCatalog.Get(SourceFormat.Docx), 1, ConversionTarget.Copy, (_, _) => { });
+        var xlsRule = new RuleRowViewModel(FormatCapabilityCatalog.Get(SourceFormat.Xls), 1, ConversionTarget.Xlsx, (_, _) => { });
+        var pptRule = new RuleRowViewModel(FormatCapabilityCatalog.Get(SourceFormat.Ppt), 1, ConversionTarget.Pptx, (_, _) => { });
+        var pdfRule = new RuleRowViewModel(FormatCapabilityCatalog.Get(SourceFormat.Pdf), 1, ConversionTarget.Copy, (_, _) => { });
+        var jsonRule = new RuleRowViewModel(FormatCapabilityCatalog.Get(SourceFormat.Json), 1, ConversionTarget.Txt, (_, _) => { });
+        var unknownRule = new RuleRowViewModel(FormatCapabilityCatalog.Get(SourceFormat.Unknown), 1, ConversionTarget.Skip, (_, _) => { });
+
+        Assert.Equal(FormatSemanticFamily.Document, docxRule.SemanticFamily);
+        Assert.Equal(FormatSemanticFamily.Spreadsheet, xlsRule.SemanticFamily);
+        Assert.Equal(FormatSemanticFamily.Presentation, pptRule.SemanticFamily);
+        Assert.Equal(FormatSemanticFamily.Pdf, pdfRule.SemanticFamily);
+        Assert.Equal(FormatSemanticFamily.DataCode, jsonRule.SemanticFamily);
+        Assert.Equal(FormatSemanticFamily.Generic, unknownRule.SemanticFamily);
+    }
+
+    [Fact]
+    public void MainWindowViewModel_exposes_office_availability_flags()
+    {
+        var allAvailable = new StubOfficeCapabilityDetector(
+            new(OfficeApplicationKind.Word, true),
+            new(OfficeApplicationKind.Excel, true),
+            new(OfficeApplicationKind.PowerPoint, true));
+        var resolver = new DefaultConversionAdapterResolver();
+        var vmAvailable = new MainWindowViewModel(
+            new FileSystemFolderScanner(),
+            new ConversionPlanner(resolver),
+            officeCapabilityDetector: allAvailable);
+
+        Assert.True(vmAvailable.IsWordOfficeAvailable);
+        Assert.True(vmAvailable.IsExcelOfficeAvailable);
+        Assert.True(vmAvailable.IsPowerPointOfficeAvailable);
+
+        var noneAvailable = new StubOfficeCapabilityDetector(
+            new(OfficeApplicationKind.Word, false),
+            new(OfficeApplicationKind.Excel, false),
+            new(OfficeApplicationKind.PowerPoint, false));
+        var vmUnavailable = new MainWindowViewModel(
+            new FileSystemFolderScanner(),
+            new ConversionPlanner(resolver),
+            officeCapabilityDetector: noneAvailable);
+
+        Assert.False(vmUnavailable.IsWordOfficeAvailable);
+        Assert.False(vmUnavailable.IsExcelOfficeAvailable);
+        Assert.False(vmUnavailable.IsPowerPointOfficeAvailable);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootPath))
@@ -1273,5 +1345,11 @@ public sealed class PresentationTests : IDisposable
             return Task.FromResult(new ConversionSummary(
                 results.Length, 0, 0, 0, 0, 0, results));
         }
+    }
+
+    private sealed class StubOfficeCapabilityDetector(params OfficeApplicationAvailability[] availabilities)
+        : IMicrosoftOfficeCapabilityDetector
+    {
+        public IReadOnlyList<OfficeApplicationAvailability> Detect() => availabilities;
     }
 }

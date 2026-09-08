@@ -125,6 +125,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public string WordOfficeStatus => GetOfficeStatus(OfficeApplicationKind.Word);
     public string ExcelOfficeStatus => GetOfficeStatus(OfficeApplicationKind.Excel);
     public string PowerPointOfficeStatus => GetOfficeStatus(OfficeApplicationKind.PowerPoint);
+    public bool IsWordOfficeAvailable => IsOfficeAvailable(OfficeApplicationKind.Word);
+    public bool IsExcelOfficeAvailable => IsOfficeAvailable(OfficeApplicationKind.Excel);
+    public bool IsPowerPointOfficeAvailable => IsOfficeAvailable(OfficeApplicationKind.PowerPoint);
 
     public IEnumerable<OperationRowViewModel> VisibleOperations =>
         Operations.Where(MatchesSelectedFilter).ToArray();
@@ -1433,6 +1436,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             application.ToShortDisplayName(),
             L(availability.IsAvailable ? "OfficeAvailable" : "OfficeNotInstalled"));
     }
+
+    private bool IsOfficeAvailable(OfficeApplicationKind application) =>
+        _officeAvailability.FirstOrDefault(item => item.Application == application)?.IsAvailable ?? false;
 
     private void RefreshDefaultOutputPaths()
     {
