@@ -43,6 +43,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private ScanResult? _lastScan;
     private string _scanRoot = string.Empty;
     private PreviewFilterOption _selectedPreviewFilter;
+    private RuleRowViewModel? _selectedRule;
     private int _foundCount;
     private int _readyCount;
     private int _selectedReadyCount;
@@ -278,11 +279,111 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         get => _selectedPreviewFilter;
         set
         {
-            if (value is not null && SetProperty(ref _selectedPreviewFilter, value))
+            if (value is null)
             {
+                return;
+            }
+
+            if (SetProperty(ref _selectedPreviewFilter, value))
+            {
+                if (value.Filter == PreviewFilter.Format && value.Format.HasValue)
+                {
+                    var matchingRule = FormatRules.FirstOrDefault(r => r.SourceFormat == value.Format.Value);
+                    SetSelectedRuleInternal(matchingRule);
+                }
+                else
+                {
+                    SetSelectedRuleInternal(null);
+                }
+
                 OnPropertyChanged(nameof(VisibleOperations));
+                OnPropertyChanged(nameof(IsPreviewFiltered));
+                OnPropertyChanged(nameof(FilteredCountSummary));
             }
         }
+    }
+
+    public RuleRowViewModel? SelectedRule
+    {
+        get => _selectedRule;
+        set
+        {
+            if (ReferenceEquals(_selectedRule, value))
+            {
+                return;
+            }
+
+            SetSelectedRuleInternal(value);
+            if (value is not null)
+            {
+                var matchingFilter = PreviewFilters.FirstOrDefault(o =>
+                    o.Filter == PreviewFilter.Format && o.Format == value.SourceFormat);
+                if (matchingFilter is not null)
+                {
+                    SetProperty(ref _selectedPreviewFilter, matchingFilter, nameof(SelectedPreviewFilter));
+                }
+            }
+            else
+            {
+                var allFilter = PreviewFilters.FirstOrDefault(o => o.Filter == PreviewFilter.All);
+                if (allFilter is not null)
+                {
+                    SetProperty(ref _selectedPreviewFilter, allFilter, nameof(SelectedPreviewFilter));
+                }
+            }
+
+            OnPropertyChanged(nameof(VisibleOperations));
+            OnPropertyChanged(nameof(IsPreviewFiltered));
+            OnPropertyChanged(nameof(FilteredCountSummary));
+        }
+    }
+
+    public bool IsPreviewFiltered => SelectedPreviewFilter.Filter != PreviewFilter.All;
+    public int VisibleOperationsCount => VisibleOperations.Count();
+    public string FilteredCountSummary => _localization.Format("PreviewShownFormat", VisibleOperationsCount, Operations.Count);
+
+    public void SelectRuleFilter(RuleRowViewModel rule)
+    {
+        SelectedRule = rule;
+    }
+
+    public void ClearRuleFilter()
+    {
+        SelectedRule = null;
+    }
+
+    public void ToggleRuleFilter(RuleRowViewModel rule)
+    {
+        if (ReferenceEquals(SelectedRule, rule) || (SelectedRule is not null && SelectedRule.SourceFormat == rule.SourceFormat))
+        {
+            ClearRuleFilter();
+        }
+        else
+        {
+            SelectRuleFilter(rule);
+        }
+    }
+
+    private void SetSelectedRuleInternal(RuleRowViewModel? rule)
+    {
+        if (ReferenceEquals(_selectedRule, rule))
+        {
+            return;
+        }
+
+        if (_selectedRule is not null)
+        {
+            _selectedRule.IsSelected = false;
+        }
+
+        _selectedRule = rule;
+
+        if (_selectedRule is not null)
+        {
+            _selectedRule.IsSelected = true;
+        }
+
+        OnPropertyChanged(nameof(SelectedRule));
     }
 
     public bool IsScanning
@@ -690,6 +791,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                         : [],
                     _localization));
             }
+
+            RebuildLocalizedOptions();
+            _selectedPreviewFilter = PreviewFilters[0];
+            SetSelectedRuleInternal(null);
+            OnPropertyChanged(nameof(SelectedPreviewFilter));
+            OnPropertyChanged(nameof(IsPreviewFiltered));
+            OnPropertyChanged(nameof(FilteredCountSummary));
 
             await RebuildPreviewAsync(scanCancellation.Token);
             scanCancellation.Token.ThrowIfCancellationRequested();
@@ -1145,6 +1253,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(SelectableCount));
         OnPropertyChanged(nameof(SelectionSummary));
         OnPropertyChanged(nameof(HasEngineUnavailable));
+        OnPropertyChanged(nameof(IsPreviewFiltered));
+        OnPropertyChanged(nameof(FilteredCountSummary));
         NotifyAvailability();
     }
 
@@ -1203,6 +1313,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         SelectedPreviewFilter.Filter switch
         {
             PreviewFilter.All => true,
+            PreviewFilter.Format => row.Operation.SourceFormat == SelectedPreviewFilter.Format,
             PreviewFilter.Convert => row.Operation.Status is OperationStatus.Ready
                 or OperationStatus.Converting
                 or OperationStatus.Succeeded
@@ -1255,6 +1366,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         CurrentFile = string.Empty;
         ClearCompletedConversionTiming();
         ResultFolder = string.Empty;
+        SetSelectedRuleInternal(null);
+        RebuildLocalizedOptions();
+        _selectedPreviewFilter = PreviewFilters[0];
+        OnPropertyChanged(nameof(SelectedPreviewFilter));
+        OnPropertyChanged(nameof(IsPreviewFiltered));
+        OnPropertyChanged(nameof(FilteredCountSummary));
         OnPropertyChanged(nameof(HasRules));
         OnPropertyChanged(nameof(HasPreview));
         OnPropertyChanged(nameof(HasEngineUnavailable));
@@ -1575,10 +1692,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public void RefreshLocalization()
     {
-        var selectedFilter = SelectedPreviewFilter.Filter;
-        RebuildLocalizedOptions();
-        _selectedPreviewFilter = PreviewFilters.Single(option => option.Filter == selectedFilter);
+        var currentFilter = SelectedPreviewFilter;
         foreach (var rule in FormatRules) rule.RefreshLocalization();
+        RebuildLocalizedOptions();
+        _selectedPreviewFilter = PreviewFilters.FirstOrDefault(option =>
+            option.Filter == currentFilter.Filter && option.Format == currentFilter.Format)
+            ?? PreviewFilters.FirstOrDefault(option => option.Filter == currentFilter.Filter)
+            ?? PreviewFilters[0];
         foreach (var row in Operations) row.RefreshLocalization();
         ValidateOutputPath();
         UpdateSourcePathError();
@@ -1603,6 +1723,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                      nameof(StopButtonText), nameof(SelectionSummary), nameof(ConvertButtonText),
                      nameof(ProgressCountText), nameof(ProgressPercentText), nameof(WordOfficeStatus),
                      nameof(ExcelOfficeStatus), nameof(PowerPointOfficeStatus), nameof(VisibleOperations),
+                     nameof(IsPreviewFiltered), nameof(FilteredCountSummary),
                      nameof(SelectedFolderDisplay), nameof(CurrentFileText), nameof(FinalConvertedText),
                      nameof(FinalCopiedText), nameof(FinalFailedText), nameof(FinalConflictsText),
                      nameof(FinalUnavailableText), nameof(FinalSkippedText), nameof(FinalNotSelectedText)
@@ -1613,6 +1734,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         PreviewFilters.Clear();
         PreviewFilters.Add(new(PreviewFilter.All, L("FilterAll")));
+        foreach (var rule in FormatRules)
+        {
+            PreviewFilters.Add(new(PreviewFilter.Format, rule.FormatLabel, rule.SourceFormat));
+        }
         PreviewFilters.Add(new(PreviewFilter.Convert, L("FilterConvert")));
         PreviewFilters.Add(new(PreviewFilter.Skip, L("FilterSkip")));
         PreviewFilters.Add(new(PreviewFilter.Unavailable, L("FilterUnavailable")));

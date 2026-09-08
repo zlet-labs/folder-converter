@@ -239,4 +239,66 @@ public partial class MainWindow : Window
         _viewModel.SetLocalizedState("SettingsSaveFailed");
         _viewModel.AddLocalizedError("SettingsSaveFailed");
     }
+
+    private void FormatRules_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject element)
+        {
+            return;
+        }
+
+        if (FindVisualParent<System.Windows.Controls.ComboBox>(element) is not null)
+        {
+            return;
+        }
+
+        var row = FindVisualParent<System.Windows.Controls.DataGridRow>(element);
+        if (row?.Item is not RuleRowViewModel clickedRule)
+        {
+            return;
+        }
+
+        if (ReferenceEquals(_viewModel.SelectedRule, clickedRule))
+        {
+            _viewModel.ClearRuleFilter();
+            if (sender is System.Windows.Controls.DataGrid dataGrid)
+            {
+                dataGrid.SelectedItem = null;
+            }
+            e.Handled = true;
+        }
+    }
+
+    private void FormatRules_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject element &&
+            FindVisualParent<System.Windows.Controls.ComboBox>(element) is not null)
+        {
+            return;
+        }
+
+        if (e.Key is System.Windows.Input.Key.Space or System.Windows.Input.Key.Enter)
+        {
+            if (sender is System.Windows.Controls.DataGrid { SelectedItem: RuleRowViewModel focusedRule })
+            {
+                _viewModel.ToggleRuleFilter(focusedRule);
+                e.Handled = true;
+            }
+        }
+    }
+
+    private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+    {
+        while (child is not null)
+        {
+            if (child is T parent)
+            {
+                return parent;
+            }
+
+            child = System.Windows.Media.VisualTreeHelper.GetParent(child);
+        }
+
+        return null;
+    }
 }

@@ -1096,6 +1096,217 @@ public sealed class PresentationTests : IDisposable
         Assert.False(vmUnavailable.IsPowerPointOfficeAvailable);
     }
 
+    [Fact]
+    public async Task Known_format_row_filters_preview_operations()
+    {
+        Write("manual.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        Write("presentation.pptx", "PK");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = Assert.Single(viewModel.FormatRules.Where(r => r.SourceFormat == SourceFormat.Pdf));
+        viewModel.SelectRuleFilter(pdfRule);
+
+        Assert.True(pdfRule.IsSelected);
+        Assert.Equal(pdfRule, viewModel.SelectedRule);
+        Assert.Equal(PreviewFilter.Format, viewModel.SelectedPreviewFilter.Filter);
+        Assert.Equal(SourceFormat.Pdf, viewModel.SelectedPreviewFilter.Format);
+        var visible = Assert.Single(viewModel.VisibleOperations);
+        Assert.Equal(SourceFormat.Pdf, visible.Operation.SourceFormat);
+        Assert.True(viewModel.IsPreviewFiltered);
+    }
+
+    [Fact]
+    public async Task Other_row_filters_exact_unknown_operations()
+    {
+        Write("manual.pdf", "%PDF-1.7");
+        Write("test-unknown.abc", "sample unknown data");
+        Write("README-fixtures.txt", "readme text");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var otherRule = Assert.Single(viewModel.FormatRules.Where(r => r.SourceFormat == SourceFormat.Unknown));
+        viewModel.SelectRuleFilter(otherRule);
+
+        Assert.True(otherRule.IsSelected);
+        Assert.Equal(otherRule, viewModel.SelectedRule);
+        var visible = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(2, visible.Length);
+        Assert.All(visible, op => Assert.Equal(SourceFormat.Unknown, op.Operation.SourceFormat));
+        Assert.Contains(visible, op => op.Operation.RelativePath.EndsWith(".abc", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(visible, op => op.Operation.RelativePath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Switching_rule_filters_updates_preview_and_active_state()
+    {
+        Write("manual.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        Write("presentation.pptx", "PK");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        var csvRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Csv);
+        var pptxRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pptx);
+
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.True(pdfRule.IsSelected);
+        Assert.False(csvRule.IsSelected);
+        Assert.Equal(SourceFormat.Pdf, Assert.Single(viewModel.VisibleOperations).Operation.SourceFormat);
+
+        viewModel.SelectRuleFilter(csvRule);
+        Assert.False(pdfRule.IsSelected);
+        Assert.True(csvRule.IsSelected);
+        Assert.Equal(SourceFormat.Csv, Assert.Single(viewModel.VisibleOperations).Operation.SourceFormat);
+
+        viewModel.SelectRuleFilter(pptxRule);
+        Assert.False(csvRule.IsSelected);
+        Assert.True(pptxRule.IsSelected);
+        Assert.Equal(SourceFormat.Pptx, Assert.Single(viewModel.VisibleOperations).Operation.SourceFormat);
+    }
+
+    [Fact]
+    public async Task Reclicking_active_rule_toggles_filter_off_to_all()
+    {
+        Write("manual.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.ToggleRuleFilter(pdfRule);
+        Assert.True(pdfRule.IsSelected);
+        Assert.Single(viewModel.VisibleOperations);
+
+        viewModel.ToggleRuleFilter(pdfRule);
+        Assert.False(pdfRule.IsSelected);
+        Assert.Null(viewModel.SelectedRule);
+        Assert.Equal(PreviewFilter.All, viewModel.SelectedPreviewFilter.Filter);
+        Assert.Equal(2, viewModel.VisibleOperations.Count());
+        Assert.False(viewModel.IsPreviewFiltered);
+    }
+
+    [Fact]
+    public async Task Selecting_all_filter_clears_active_rule()
+    {
+        Write("manual.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.True(pdfRule.IsSelected);
+
+        viewModel.SelectedPreviewFilter = viewModel.PreviewFilters.Single(o => o.Filter == PreviewFilter.All);
+        Assert.Null(viewModel.SelectedRule);
+        Assert.False(pdfRule.IsSelected);
+        Assert.Equal(2, viewModel.VisibleOperations.Count());
+    }
+
+    [Fact]
+    public async Task Selection_checkbox_states_survive_preview_filtering()
+    {
+        Write("manual1.pdf", "%PDF-1.7");
+        Write("manual2.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        viewModel.ClearSelection();
+        viewModel.Operations[0].IsSelected = true;
+        viewModel.Operations[2].IsSelected = true;
+        Assert.Equal(2, viewModel.SelectedReadyCount);
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.Equal(2, viewModel.SelectedReadyCount);
+
+        var csvRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Csv);
+        viewModel.SelectRuleFilter(csvRule);
+        Assert.Equal(2, viewModel.SelectedReadyCount);
+
+        viewModel.ClearRuleFilter();
+        Assert.Equal(2, viewModel.SelectedReadyCount);
+        Assert.True(viewModel.Operations[0].IsSelected);
+        Assert.False(viewModel.Operations[1].IsSelected);
+        Assert.True(viewModel.Operations[2].IsSelected);
+    }
+
+    [Fact]
+    public async Task SelectAll_ClearSelection_InvertSelection_preserve_global_semantics_under_filter()
+    {
+        Write("manual1.pdf", "%PDF-1.7");
+        Write("manual2.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.Equal(2, viewModel.VisibleOperations.Count());
+
+        viewModel.ClearSelection();
+        Assert.All(viewModel.Operations, op => Assert.False(op.IsSelected));
+
+        viewModel.SelectAll();
+        Assert.All(viewModel.Operations, op => Assert.True(op.IsSelected));
+
+        viewModel.InvertSelection();
+        Assert.All(viewModel.Operations, op => Assert.False(op.IsSelected));
+    }
+
+    [Fact]
+    public async Task ConvertAsync_processes_all_checked_operations_not_just_filtered_view()
+    {
+        Write("manual1.pdf", "%PDF-1.7");
+        Write("manual2.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        var recordingProcessor = new RecordingProcessor();
+        var resolver = new DefaultConversionAdapterResolver();
+        var viewModel = new MainWindowViewModel(
+            new FileSystemFolderScanner(),
+            new ConversionPlanner(resolver),
+            conversionProcessor: recordingProcessor);
+        viewModel.SelectedFolder = _rootPath;
+        await viewModel.ScanAsync();
+
+        Assert.Equal(3, viewModel.SelectedReadyCount);
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.Equal(2, viewModel.VisibleOperations.Count());
+
+        await viewModel.ConvertAsync();
+        Assert.Equal(3, recordingProcessor.Received.Count);
+    }
+
+    [Fact]
+    public async Task Filtered_count_summary_localizes_correctly_in_ru_and_en()
+    {
+        Write("manual1.pdf", "%PDF-1.7");
+        Write("manual2.pdf", "%PDF-1.7");
+        Write("data.csv", "a,b,c");
+        var localization = LocalizationService.Current;
+        localization.Apply(AppLanguage.Russian);
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        Assert.False(viewModel.IsPreviewFiltered);
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+        Assert.True(viewModel.IsPreviewFiltered);
+        Assert.Equal("Показано: 2 из 3", viewModel.FilteredCountSummary);
+
+        localization.Apply(AppLanguage.English);
+        Assert.Equal("Shown: 2 of 3", viewModel.FilteredCountSummary);
+
+        localization.Apply(AppLanguage.Russian);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootPath))

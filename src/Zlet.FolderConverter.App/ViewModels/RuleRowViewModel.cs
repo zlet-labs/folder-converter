@@ -11,6 +11,7 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
     private readonly IReadOnlyList<ScannedFile> _extensionFiles;
     private readonly LocalizationService _localization;
     private ConversionTargetOption _selectedTarget;
+    private bool _isSelected;
 
     public RuleRowViewModel(
         FormatCapability capability,
@@ -57,6 +58,21 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
     public bool IsSingleAction => Targets.Count <= 1;
     public string SingleActionReason => _localization.Get("RuleSingleActionReason");
     public string SingleActionTooltip => string.Format(_localization.Culture, _localization.Get("RuleOnlyActionAvailable"), SelectedTarget.Label);
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value)
+            {
+                return;
+            }
+
+            _isSelected = value;
+            OnPropertyChanged();
+        }
+    }
 
     public ConversionTargetOption SelectedTarget
     {
