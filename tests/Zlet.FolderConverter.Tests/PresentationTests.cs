@@ -32,6 +32,61 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(expected, OperationRowViewModel.LocalizeStatus(status));
     }
 
+    [Theory]
+    [InlineData(OperationStatus.Ready, ConversionTarget.Copy, false, "ReadyCopy")]
+    [InlineData(OperationStatus.Ready, ConversionTarget.Docx, false, "ReadyConvert")]
+    [InlineData(OperationStatus.Converting, ConversionTarget.Docx, false, "InProgress")]
+    [InlineData(OperationStatus.Succeeded, ConversionTarget.Copy, false, "Copied")]
+    [InlineData(OperationStatus.Succeeded, ConversionTarget.Docx, false, "Success")]
+    [InlineData(OperationStatus.Skipped, ConversionTarget.Skip, false, "Warning")]
+    [InlineData(OperationStatus.Conflict, ConversionTarget.Docx, false, "Conflict")]
+    [InlineData(OperationStatus.Failed, ConversionTarget.Docx, false, "Danger")]
+    [InlineData(OperationStatus.EngineUnavailable, ConversionTarget.Docx, false, "Unavailable")]
+    [InlineData(OperationStatus.Unsupported, ConversionTarget.Docx, false, "Unavailable")]
+    [InlineData(OperationStatus.Cancelled, ConversionTarget.Docx, false, "Cancelled")]
+    [InlineData(OperationStatus.NotProcessed, ConversionTarget.Docx, false, "Cancelled")]
+    [InlineData(OperationStatus.Ready, ConversionTarget.Docx, true, "Cancelled")]
+    public void OperationRowViewModel_maps_semantic_status_tones(
+        OperationStatus status,
+        ConversionTarget target,
+        bool isNotSelected,
+        string expectedTone)
+    {
+        var op = new PlannedOperation(
+            Path.Combine(_rootPath, "file.doc"), "file.doc", SourceFormat.Doc,
+            target, ".docx", Path.Combine(_rootPath, "file.docx"), true,
+            status, "msg", _rootPath, _rootPath);
+        var row = new OperationRowViewModel(op, isNotSelected: isNotSelected);
+        Assert.Equal(expectedTone, row.StatusTone);
+    }
+
+    [Fact]
+    public void AppStyles_contains_all_semantic_status_brushes_and_chip_styles()
+    {
+        var uri = new Uri("/ZletConverter;component/Resources/AppStyles.xaml", UriKind.Relative);
+        var styles = new System.Windows.ResourceDictionary { Source = uri };
+
+        var requiredKeys = new[]
+        {
+            "ReadyCopyStatusBackgroundBrush", "ReadyCopyStatusBorderBrush", "ReadyCopyStatusForegroundBrush",
+            "ReadyConvertStatusBackgroundBrush", "ReadyConvertStatusBorderBrush", "ReadyConvertStatusForegroundBrush",
+            "InProgressStatusBackgroundBrush", "InProgressStatusBorderBrush", "InProgressStatusForegroundBrush",
+            "CopiedStatusBackgroundBrush", "CopiedStatusBorderBrush", "CopiedStatusForegroundBrush",
+            "SuccessStatusBackgroundBrush", "SuccessStatusBorderBrush", "SuccessStatusForegroundBrush",
+            "WarningStatusBackgroundBrush", "WarningStatusBorderBrush", "WarningStatusForegroundBrush",
+            "ConflictStatusBackgroundBrush", "ConflictStatusBorderBrush", "ConflictStatusForegroundBrush",
+            "DangerStatusBackgroundBrush", "DangerStatusBorderBrush", "DangerStatusForegroundBrush",
+            "UnavailableStatusBackgroundBrush", "UnavailableStatusBorderBrush", "UnavailableStatusForegroundBrush",
+            "CancelledStatusBackgroundBrush", "CancelledStatusBorderBrush", "CancelledStatusForegroundBrush",
+            "StatusChipBorderStyle", "StatusChipTextStyle"
+        };
+
+        foreach (var key in requiredKeys)
+        {
+            Assert.True(styles.Contains(key), $"Missing resource key: {key}");
+        }
+    }
+
     [Fact]
     public void OperationRowViewModel_shows_running_powerpoint_message()
     {

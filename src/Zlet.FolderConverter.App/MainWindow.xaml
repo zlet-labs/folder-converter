@@ -617,41 +617,10 @@
                                     <DataGridTemplateColumn Header="{DynamicResource Status}" Width="140" MinWidth="95">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Border CornerRadius="10"
-                                                        Padding="8,4"
-                                                        MinHeight="28"
-                                                        HorizontalAlignment="Left"
+                                                <Border Style="{StaticResource StatusChipBorderStyle}"
                                                         ToolTip="{Binding Message}">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="{StaticResource NeutralStatusBrush}" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding StatusTone}" Value="Warning">
-                                                                    <Setter Property="Background" Value="{StaticResource WarningStatusBrush}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding StatusTone}" Value="Danger">
-                                                                    <Setter Property="Background" Value="{StaticResource DangerStatusBrush}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding StatusTone}" Value="Success">
-                                                                    <Setter Property="Background" Value="{StaticResource SuccessStatusBrush}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding StatusTone}" Value="InProgress">
-                                                                    <Setter Property="Background" Value="{StaticResource InProgressStatusBrush}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding StatusTone}" Value="Ready">
-                                                                    <Setter Property="Background" Value="{StaticResource ReadyStatusBrush}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding StatusTone}" Value="Cancelled">
-                                                                    <Setter Property="Background" Value="{StaticResource CancelledStatusBrush}" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
                                                     <TextBlock Text="{Binding Status}"
-                                                               FontSize="14"
-                                                               FontWeight="SemiBold"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="125" />
+                                                               Style="{StaticResource StatusChipTextStyle}" />
                                                 </Border>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>

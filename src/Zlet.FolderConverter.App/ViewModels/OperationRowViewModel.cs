@@ -110,14 +110,17 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
     }
     public string StatusTone => _isNotSelected ? "Cancelled" : Operation.Status switch
     {
-        OperationStatus.Succeeded => "Success",
+        OperationStatus.Ready when Operation.Target == ConversionTarget.Copy => "ReadyCopy",
+        OperationStatus.Ready => "ReadyConvert",
         OperationStatus.Converting => "InProgress",
-        OperationStatus.Ready => "Ready",
-        OperationStatus.Conflict or OperationStatus.EngineUnavailable
-            or OperationStatus.Unsupported or OperationStatus.Skipped => "Warning",
+        OperationStatus.Succeeded when Operation.Target == ConversionTarget.Copy => "Copied",
+        OperationStatus.Succeeded => "Success",
+        OperationStatus.Skipped => "Warning",
+        OperationStatus.Conflict => "Conflict",
         OperationStatus.Failed => "Danger",
+        OperationStatus.EngineUnavailable or OperationStatus.Unsupported => "Unavailable",
         OperationStatus.Cancelled or OperationStatus.NotProcessed => "Cancelled",
-        _ => "Neutral"
+        _ => "Unavailable"
     };
     public string Message => OperationMessageLocalizer.Localize(
         Operation.Status,
