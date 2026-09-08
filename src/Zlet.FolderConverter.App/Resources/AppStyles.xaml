@@ -9,13 +9,64 @@
     <SolidColorBrush x:Key="TextTertiaryBrush" Color="#77869E" />
     <SolidColorBrush x:Key="AccentBrush" Color="#6C4DFF" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#7D63FF" />
-    <SolidColorBrush x:Key="NeutralStatusBrush" Color="#38465C" />
-    <SolidColorBrush x:Key="WarningStatusBrush" Color="#8A5C18" />
-    <SolidColorBrush x:Key="DangerStatusBrush" Color="#8E3040" />
-    <SolidColorBrush x:Key="SuccessStatusBrush" Color="#176447" />
-    <SolidColorBrush x:Key="InProgressStatusBrush" Color="#235A82" />
-    <SolidColorBrush x:Key="ReadyStatusBrush" Color="#4C456F" />
-    <SolidColorBrush x:Key="CancelledStatusBrush" Color="#5A4655" />
+    <!-- Semantic Status Brushes: Ready to copy (Cyan #06B6D4) -->
+    <SolidColorBrush x:Key="ReadyCopyStatusBackgroundBrush" Color="#1E06B6D4" />
+    <SolidColorBrush x:Key="ReadyCopyStatusBorderBrush" Color="#6006B6D4" />
+    <SolidColorBrush x:Key="ReadyCopyStatusForegroundBrush" Color="#67E8F9" />
+
+    <!-- Semantic Status Brushes: Ready to convert (Violet #8B5CF6) -->
+    <SolidColorBrush x:Key="ReadyConvertStatusBackgroundBrush" Color="#1E8B5CF6" />
+    <SolidColorBrush x:Key="ReadyConvertStatusBorderBrush" Color="#608B5CF6" />
+    <SolidColorBrush x:Key="ReadyConvertStatusForegroundBrush" Color="#C4B5FD" />
+
+    <!-- Semantic Status Brushes: In progress (Blue #3B82F6) -->
+    <SolidColorBrush x:Key="InProgressStatusBackgroundBrush" Color="#283B82F6" />
+    <SolidColorBrush x:Key="InProgressStatusBorderBrush" Color="#703B82F6" />
+    <SolidColorBrush x:Key="InProgressStatusForegroundBrush" Color="#93C5FD" />
+
+    <!-- Semantic Status Brushes: Copied (Teal #14B8A6) -->
+    <SolidColorBrush x:Key="CopiedStatusBackgroundBrush" Color="#2014B8A6" />
+    <SolidColorBrush x:Key="CopiedStatusBorderBrush" Color="#6614B8A6" />
+    <SolidColorBrush x:Key="CopiedStatusForegroundBrush" Color="#5EEAD4" />
+
+    <!-- Semantic Status Brushes: Converted / Success (Green #22C55E) -->
+    <SolidColorBrush x:Key="SuccessStatusBackgroundBrush" Color="#2022C55E" />
+    <SolidColorBrush x:Key="SuccessStatusBorderBrush" Color="#6622C55E" />
+    <SolidColorBrush x:Key="SuccessStatusForegroundBrush" Color="#86EFAC" />
+
+    <!-- Semantic Status Brushes: Skipped / Warning (Amber #F59E0B) -->
+    <SolidColorBrush x:Key="WarningStatusBackgroundBrush" Color="#20F59E0B" />
+    <SolidColorBrush x:Key="WarningStatusBorderBrush" Color="#66F59E0B" />
+    <SolidColorBrush x:Key="WarningStatusForegroundBrush" Color="#FDE68A" />
+
+    <!-- Semantic Status Brushes: Conflict (Orange #F97316) -->
+    <SolidColorBrush x:Key="ConflictStatusBackgroundBrush" Color="#20F97316" />
+    <SolidColorBrush x:Key="ConflictStatusBorderBrush" Color="#66F97316" />
+    <SolidColorBrush x:Key="ConflictStatusForegroundBrush" Color="#FDBA74" />
+
+    <!-- Semantic Status Brushes: Failed / Error / Danger (Red #EF4444) -->
+    <SolidColorBrush x:Key="DangerStatusBackgroundBrush" Color="#20EF4444" />
+    <SolidColorBrush x:Key="DangerStatusBorderBrush" Color="#66EF4444" />
+    <SolidColorBrush x:Key="DangerStatusForegroundBrush" Color="#FCA5A5" />
+
+    <!-- Semantic Status Brushes: Unavailable / Neutral (Slate #64748B) -->
+    <SolidColorBrush x:Key="UnavailableStatusBackgroundBrush" Color="#1C64748B" />
+    <SolidColorBrush x:Key="UnavailableStatusBorderBrush" Color="#4864748B" />
+    <SolidColorBrush x:Key="UnavailableStatusForegroundBrush" Color="#94A3B8" />
+
+    <!-- Semantic Status Brushes: Cancelled (Gray-violet #7C6F9B) -->
+    <SolidColorBrush x:Key="CancelledStatusBackgroundBrush" Color="#1C7C6F9B" />
+    <SolidColorBrush x:Key="CancelledStatusBorderBrush" Color="#487C6F9B" />
+    <SolidColorBrush x:Key="CancelledStatusForegroundBrush" Color="#C4BED5" />
+
+    <!-- Legacy compatibility aliases -->
+    <SolidColorBrush x:Key="NeutralStatusBrush" Color="#1C64748B" />
+    <SolidColorBrush x:Key="WarningStatusBrush" Color="#20F59E0B" />
+    <SolidColorBrush x:Key="DangerStatusBrush" Color="#20EF4444" />
+    <SolidColorBrush x:Key="SuccessStatusBrush" Color="#2022C55E" />
+    <SolidColorBrush x:Key="InProgressStatusBrush" Color="#283B82F6" />
+    <SolidColorBrush x:Key="ReadyStatusBrush" Color="#1E8B5CF6" />
+    <SolidColorBrush x:Key="CancelledStatusBrush" Color="#1C7C6F9B" />
 
     <local:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"
         xmlns:local="clr-namespace:Zlet.FolderConverter.App" />
@@ -322,6 +373,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="11,6" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="Transparent" />
@@ -345,5 +397,99 @@
         <Setter Property="MaxWidth" Value="520" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- Semantic Status Chip Styles -->
+    <Style x:Key="StatusChipBorderStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="7,2" />
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="{StaticResource UnavailableStatusBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource UnavailableStatusBorderBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding StatusTone}" Value="ReadyCopy">
+                <Setter Property="Background" Value="{StaticResource ReadyCopyStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ReadyCopyStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="ReadyConvert">
+                <Setter Property="Background" Value="{StaticResource ReadyConvertStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ReadyConvertStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="InProgress">
+                <Setter Property="Background" Value="{StaticResource InProgressStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource InProgressStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Copied">
+                <Setter Property="Background" Value="{StaticResource CopiedStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource CopiedStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Success">
+                <Setter Property="Background" Value="{StaticResource SuccessStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource SuccessStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Warning">
+                <Setter Property="Background" Value="{StaticResource WarningStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource WarningStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Conflict">
+                <Setter Property="Background" Value="{StaticResource ConflictStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ConflictStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Danger">
+                <Setter Property="Background" Value="{StaticResource DangerStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource DangerStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Unavailable">
+                <Setter Property="Background" Value="{StaticResource UnavailableStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource UnavailableStatusBorderBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Cancelled">
+                <Setter Property="Background" Value="{StaticResource CancelledStatusBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource CancelledStatusBorderBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="StatusChipTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="Foreground" Value="{StaticResource UnavailableStatusForegroundBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding StatusTone}" Value="ReadyCopy">
+                <Setter Property="Foreground" Value="{StaticResource ReadyCopyStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="ReadyConvert">
+                <Setter Property="Foreground" Value="{StaticResource ReadyConvertStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="InProgress">
+                <Setter Property="Foreground" Value="{StaticResource InProgressStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Copied">
+                <Setter Property="Foreground" Value="{StaticResource CopiedStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Success">
+                <Setter Property="Foreground" Value="{StaticResource SuccessStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Warning">
+                <Setter Property="Foreground" Value="{StaticResource WarningStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Conflict">
+                <Setter Property="Foreground" Value="{StaticResource ConflictStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Danger">
+                <Setter Property="Foreground" Value="{StaticResource DangerStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Unavailable">
+                <Setter Property="Foreground" Value="{StaticResource UnavailableStatusForegroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding StatusTone}" Value="Cancelled">
+                <Setter Property="Foreground" Value="{StaticResource CancelledStatusForegroundBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 </ResourceDictionary>

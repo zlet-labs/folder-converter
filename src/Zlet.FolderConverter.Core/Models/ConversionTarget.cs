@@ -18,7 +18,7 @@ public static class ConversionTargetExtensions
 {
     public static string ToDisplayName(this ConversionTarget target) => target switch
     {
-        ConversionTarget.Skip => "Не трогать",
+        ConversionTarget.Skip => "Пропускаем",
         ConversionTarget.Copy => "Копировать без изменений",
         ConversionTarget.Txt => "TXT",
         ConversionTarget.Markdown => "Markdown",
@@ -28,7 +28,7 @@ public static class ConversionTargetExtensions
         ConversionTarget.Pdf => "PDF",
         ConversionTarget.Csv => "CSV",
         ConversionTarget.Tsv => "TSV",
-        _ => "Не трогать"
+        _ => "Пропускаем"
     };
 
     public static string ToExtension(this ConversionTarget target) => target switch

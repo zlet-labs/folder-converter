@@ -110,14 +110,17 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
     }
     public string StatusTone => _isNotSelected ? "Cancelled" : Operation.Status switch
     {
-        OperationStatus.Succeeded => "Success",
+        OperationStatus.Ready when Operation.Target == ConversionTarget.Copy => "ReadyCopy",
+        OperationStatus.Ready => "ReadyConvert",
         OperationStatus.Converting => "InProgress",
-        OperationStatus.Ready => "Ready",
-        OperationStatus.Conflict or OperationStatus.EngineUnavailable
-            or OperationStatus.Unsupported or OperationStatus.Skipped => "Warning",
+        OperationStatus.Succeeded when Operation.Target == ConversionTarget.Copy => "Copied",
+        OperationStatus.Succeeded => "Success",
+        OperationStatus.Skipped => "Warning",
+        OperationStatus.Conflict => "Conflict",
         OperationStatus.Failed => "Danger",
+        OperationStatus.EngineUnavailable or OperationStatus.Unsupported => "Unavailable",
         OperationStatus.Cancelled or OperationStatus.NotProcessed => "Cancelled",
-        _ => "Neutral"
+        _ => "Unavailable"
     };
     public string Message => OperationMessageLocalizer.Localize(
         Operation.Status,
@@ -126,7 +129,7 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
         Result?.Diagnostic?.ErrorCode,
         _localization);
 
-    public void BeginExecution(long timestamp, int percent)
+    public void BeginExecution(long timestamp, int? percent = null)
     {
         if (Operation.Status != OperationStatus.Converting)
         {
@@ -135,10 +138,17 @@ public sealed class OperationRowViewModel : INotifyPropertyChanged
             _liveExecutionElapsed = null;
             Result = null;
         }
-        var nextPercent = Math.Clamp(percent, 0, 99);
-        _operationPercent = _operationPercent.HasValue
-            ? Math.Max(_operationPercent.Value, nextPercent)
-            : nextPercent;
+        if (percent.HasValue)
+        {
+            var nextPercent = Math.Clamp(percent.Value, 0, 99);
+            _operationPercent = _operationPercent.HasValue
+                ? Math.Max(_operationPercent.Value, nextPercent)
+                : nextPercent;
+        }
+        else
+        {
+            _operationPercent = null;
+        }
         _isSelected = false;
         _isNotSelected = false;
         Operation = Operation with { Status = OperationStatus.Converting, Message = string.Empty };

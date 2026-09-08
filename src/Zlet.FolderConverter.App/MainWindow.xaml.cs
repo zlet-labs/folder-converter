@@ -209,6 +209,28 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OpenReportButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_viewModel.CanOpenReport)
+        {
+            return;
+        }
+
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = _viewModel.ReportPath,
+                UseShellExecute = true
+            };
+            Process.Start(startInfo);
+        }
+        catch
+        {
+            _viewModel.AddLocalizedError("OpenReportFailed");
+        }
+    }
+
     private void SettingsButton_Click(object sender, RoutedEventArgs e) =>
         new SettingsWindow { Owner = this }.ShowDialog();
 

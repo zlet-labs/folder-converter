@@ -48,7 +48,7 @@ public sealed class UxPolishTests : IDisposable
         viewModel.ClearSelection();
 
         Assert.Equal(string.Empty, viewModel.BuildConversionList());
-        Assert.Equal("Нет выбранных файлов для преобразования", viewModel.CopyListStatus);
+        Assert.Equal("Нет выбранных файлов для обработки", viewModel.CopyListStatus);
         Assert.DoesNotContain(_root, viewModel.CopyListStatus, StringComparison.OrdinalIgnoreCase);
     }
 
