@@ -1649,6 +1649,138 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(4, recordingProcessor.Received.Count);
     }
 
+    [Fact]
+    public async Task Preview_sort_by_action_groups_identical_actions_together_across_different_source_formats()
+    {
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "data.csv"), "data.csv", SourceFormat.Csv, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "doc.pdf"), "doc.pdf", SourceFormat.Pdf, ConversionTarget.Markdown, ".md", Path.Combine(_rootPath, "doc.md"), true, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "skip.pdf"), "skip.pdf", SourceFormat.Pdf, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "file.txt"), "file.txt", SourceFormat.Unknown, ConversionTarget.Copy, "", Path.Combine(_rootPath, "file.txt"), true, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "copy.csv"), "copy.csv", SourceFormat.Csv, ConversionTarget.Copy, "", Path.Combine(_rootPath, "copy.csv"), true, OperationStatus.Ready, ""),
+        };
+
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+
+        // Sort Action Ascending
+        viewModel.SortBy(PreviewSortColumn.Action, ListSortDirection.Ascending);
+        var asc = viewModel.VisibleOperations.Select(r => (r.FilePath, r.Operation.Target)).ToArray();
+
+        // Verify that all Copy actions are together
+        var copyIndices = asc.Select((item, idx) => (item, idx)).Where(x => x.item.Target == ConversionTarget.Copy).Select(x => x.idx).ToArray();
+        Assert.Equal(2, copyIndices.Length);
+        Assert.Equal(1, copyIndices[1] - copyIndices[0]);
+
+        // Verify that all Skip actions are together (not separated by Markdown)
+        var skipIndices = asc.Select((item, idx) => (item, idx)).Where(x => x.item.Target == ConversionTarget.Skip).Select(x => x.idx).ToArray();
+        Assert.Equal(2, skipIndices.Length);
+        Assert.Equal(1, skipIndices[1] - skipIndices[0]);
+
+        // Sort Action Descending
+        viewModel.SortBy(PreviewSortColumn.Action, ListSortDirection.Descending);
+        var desc = viewModel.VisibleOperations.Select(r => (r.FilePath, r.Operation.Target)).ToArray();
+
+        var descSkipIndices = desc.Select((item, idx) => (item, idx)).Where(x => x.item.Target == ConversionTarget.Skip).Select(x => x.idx).ToArray();
+        Assert.Equal(2, descSkipIndices.Length);
+        Assert.Equal(1, descSkipIndices[1] - descSkipIndices[0]);
+
+        var descCopyIndices = desc.Select((item, idx) => (item, idx)).Where(x => x.item.Target == ConversionTarget.Copy).Select(x => x.idx).ToArray();
+        Assert.Equal(2, descCopyIndices.Length);
+        Assert.Equal(1, descCopyIndices[1] - descCopyIndices[0]);
+    }
+
+    [Fact]
+    public async Task Preview_sort_by_status_re_sorts_immediately_when_not_selected_row_checkbox_restored()
+    {
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "file1.bin"), "file1.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "file2.bin"), "file2.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+        };
+
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+
+        // Simulate partial conversion where file1 was not selected
+        var row1 = viewModel.Operations[0];
+        var row2 = viewModel.Operations[1];
+        row1.MarkNotSelected();
+        Assert.True(row1.IsNotSelected);
+        Assert.False(row2.IsNotSelected);
+
+        // Sort by Status ascending -> row2 (Ready, rank 1) must be first, row1 (NotSelected, rank 10) must be last
+        viewModel.SortBy(PreviewSortColumn.Status, ListSortDirection.Ascending);
+        Assert.Equal("file2.bin", viewModel.VisibleOperations.First().FilePath);
+        Assert.Equal("file1.bin", viewModel.VisibleOperations.Last().FilePath);
+
+        // Check/restore file1 -> its effective status changes from NotSelected back to Ready
+        row1.IsSelected = true;
+        Assert.False(row1.IsNotSelected);
+
+        // Verify visible operations immediately re-sorted without manual rescan:
+        // Now both are Ready (rank 1), file1.bin comes before file2.bin alphabetically
+        var visible = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("file1.bin", visible[0].FilePath);
+        Assert.Equal("file2.bin", visible[1].FilePath);
+    }
+
+    [Fact]
+    public async Task Preview_sort_by_time_re_sorts_during_live_elapsed_updates()
+    {
+        var clock = new ManualTimeProvider();
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "a.txt"), "a.txt", SourceFormat.Unknown, ConversionTarget.Docx, ".docx", Path.Combine(_rootPath, "a.docx"), true, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "b.txt"), "b.txt", SourceFormat.Unknown, ConversionTarget.Docx, ".docx", Path.Combine(_rootPath, "b.docx"), true, OperationStatus.Ready, ""),
+        };
+
+        MainWindowViewModel? viewModel = null;
+        var processor = new CallbackProcessor((batch, progress, cancellationToken) =>
+        {
+            Assert.NotNull(viewModel);
+
+            // 1. row B starts and completes in 5 seconds
+            progress?.Report(new ConversionProgress(0, 2, "b.txt", OperationStatus.Converting));
+            clock.Advance(TimeSpan.FromSeconds(5));
+            var resultB = new ConversionResult(batch[1], OperationStatus.Succeeded, "ok");
+            progress?.Report(new ConversionProgress(1, 2, "b.txt", OperationStatus.Succeeded, resultB));
+
+            // 2. row A starts converting
+            progress?.Report(new ConversionProgress(1, 2, "a.txt", OperationStatus.Converting));
+
+            // Clock advances 4 seconds: row A has 4s live elapsed
+            clock.Advance(TimeSpan.FromSeconds(4));
+            viewModel.RefreshConversionTiming();
+
+            // Sort by Time Ascending: row A (4s) is first, row B (5s) is second
+            viewModel.SortBy(PreviewSortColumn.Time, ListSortDirection.Ascending);
+            var visibleBefore = viewModel.VisibleOperations.ToArray();
+            Assert.Equal("a.txt", visibleBefore[0].FilePath);
+            Assert.Equal("b.txt", visibleBefore[1].FilePath);
+
+            // Clock advances 2 seconds: row A live elapsed becomes 6s (> 5s)
+            clock.Advance(TimeSpan.FromSeconds(2));
+            viewModel.RefreshConversionTiming();
+
+            // VisibleOperations must automatically re-sort: row B (5s) is now before row A (6s)!
+            var visibleAfter = viewModel.VisibleOperations.ToArray();
+            Assert.Equal("b.txt", visibleAfter[0].FilePath);
+            Assert.Equal("a.txt", visibleAfter[1].FilePath);
+
+            // Complete row A
+            var resultA = new ConversionResult(batch[0], OperationStatus.Succeeded, "ok");
+            progress?.Report(new ConversionProgress(2, 2, "a.txt", OperationStatus.Succeeded, resultA));
+
+            return Task.FromResult(new ConversionSummary(2, 0, 0, 0, 0, 0, [resultB, resultA]));
+        });
+
+        viewModel = CreateStatusViewModel(ops, processor, clock);
+        await viewModel.ScanAsync();
+        await viewModel.ConvertAsync();
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootPath))

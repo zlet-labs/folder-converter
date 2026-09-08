@@ -1439,7 +1439,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     private static string GetActionSortKey(OperationRowViewModel row) =>
-        $"{row.Operation.SourceFormat} -> {row.Operation.Target}";
+        $"{row.Operation.Target}:{row.Operation.SourceFormat}";
 
     private static int GetStatusSortRank(OperationRowViewModel row)
     {
@@ -1533,7 +1533,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ProgressCountText));
     }
 
-    private void RefreshConversionTiming()
+    public void RefreshConversionTiming()
     {
         if (!IsConverting || _completedElapsed.HasValue)
         {
@@ -1544,6 +1544,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var now = _timeProvider.GetTimestamp();
         foreach (var row in Operations)
             row.RefreshExecutionTime(_timeProvider, now);
+
+        if (_sortColumn == PreviewSortColumn.Time)
+        {
+            OnPropertyChanged(nameof(VisibleOperations));
+        }
+
         ElapsedTimeText = _localization.Format("ElapsedFormat", FormatDuration(elapsed));
         if (_progressTotal <= 0 || _progressCompleted <= 0)
         {
@@ -1833,6 +1839,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(SelectableCount));
         OnPropertyChanged(nameof(SelectionSummary));
         NotifyAvailability();
+        if (_sortColumn == PreviewSortColumn.Status)
+        {
+            OnPropertyChanged(nameof(VisibleOperations));
+        }
     }
 
     private void UpdateSourcePathError()

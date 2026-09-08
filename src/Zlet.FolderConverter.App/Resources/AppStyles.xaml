@@ -430,6 +430,11 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Column.CanUserSort, RelativeSource={RelativeSource Self}}" Value="False">
+                <Setter Property="Cursor" Value="Arrow" />
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="DataGridCell">

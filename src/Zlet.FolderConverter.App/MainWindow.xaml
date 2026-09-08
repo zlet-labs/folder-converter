@@ -641,6 +641,13 @@
                                       Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="" Width="34" CanUserSort="False">
+                                        <DataGridTemplateColumn.HeaderStyle>
+                                            <Style TargetType="DataGridColumnHeader"
+                                                   BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                                <Setter Property="Cursor" Value="Arrow" />
+                                                <Setter Property="IsHitTestVisible" Value="False" />
+                                            </Style>
+                                        </DataGridTemplateColumn.HeaderStyle>
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
