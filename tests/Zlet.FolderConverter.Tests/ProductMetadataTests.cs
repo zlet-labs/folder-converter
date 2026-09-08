@@ -97,6 +97,9 @@ public sealed class ProductMetadataTests
         Assert.Contains("ImageIconGeometry", styles);
         Assert.Contains("EbookIconGeometry", styles);
         Assert.Contains("GenericFileIconGeometry", styles);
+
+        Assert.DoesNotContain("RowDetailsTemplate", mainWindow);
+        Assert.DoesNotContain("ExtensionBreakdown", mainWindow);
     }
 
     [Fact]

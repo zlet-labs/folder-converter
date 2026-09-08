@@ -229,24 +229,8 @@
                                           HeadersVisibility="Column"
                                           BorderThickness="0"
                                           RowHeight="52"
-                                          RowDetailsVisibilityMode="Visible"
                                           IsReadOnly="True"
                                           Visibility="{Binding HasRules, Converter={StaticResource BoolToVisibilityConverter}}">
-                                    <DataGrid.RowDetailsTemplate>
-                                        <DataTemplate>
-                                            <Border Margin="12,-5,12,8"
-                                                    Padding="10,6"
-                                                    CornerRadius="6"
-                                                    Background="#6B17243A"
-                                                    Visibility="{Binding HasExtensionBreakdown, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                <TextBlock Text="{Binding ExtensionBreakdown}"
-                                                           ToolTip="{Binding ExtensionBreakdown}"
-                                                           FontSize="14"
-                                                           Foreground="{StaticResource TextSecondaryBrush}"
-                                                           TextWrapping="Wrap" />
-                                            </Border>
-                                        </DataTemplate>
-                                    </DataGrid.RowDetailsTemplate>
                                     <DataGrid.Columns>
                                         <DataGridTemplateColumn Header="{DynamicResource Format}" Width="80" MinWidth="68">
                                             <DataGridTemplateColumn.CellTemplate>
