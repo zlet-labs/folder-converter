@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: draft-release-${{ github.repository }}-${{ github.ref }}
+  group: draft-release-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:
@@ -75,7 +75,7 @@ jobs:
           "installer=$installer" >> $env:GITHUB_OUTPUT
           "portable=$portable" >> $env:GITHUB_OUTPUT
 
-      - name: Remove stale draft only and guard published release
+      - name: Remove stale drafts only and guard published release
         shell: pwsh
         run: |
           $tag = $env:RELEASE_TAG
@@ -87,23 +87,21 @@ jobs:
           $releases = $releasesJson | ConvertFrom-Json
           $matches = @($releases | Where-Object { $_.tag_name -eq $tag })
 
-          if ($matches.Count -gt 1) {
-            throw "Expected at most one release with tag $tag, found $($matches.Count)."
+          $publishedMatches = @($matches | Where-Object { -not $_.draft })
+          if ($publishedMatches.Count -gt 0) {
+            throw "Release $tag is already published; refusing to replace or mutate it."
           }
 
-          if ($matches.Count -eq 1) {
-            $release = $matches[0]
-            if (-not $release.draft) {
-              throw "Release $tag is already published; refusing to replace or mutate it."
-            }
-            if (-not $release.prerelease) {
-              throw "Existing $tag draft is not marked as pre-release; refusing to replace it."
-            }
+          $unsafeDrafts = @($matches | Where-Object { -not $_.prerelease })
+          if ($unsafeDrafts.Count -gt 0) {
+            throw "At least one existing $tag draft is not marked as pre-release; refusing cleanup."
+          }
 
+          foreach ($release in $matches) {
             Write-Output "Deleting stale draft release $tag (id $($release.id)) before rebuilding."
             gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/$($release.id)"
             if ($LASTEXITCODE -ne 0) {
-              throw "Failed to delete stale draft release $tag."
+              throw "Failed to delete stale draft release $tag (id $($release.id))."
             }
           }
 
