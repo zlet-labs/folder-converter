@@ -271,6 +271,12 @@ public partial class MainWindow : Window
 
     private void FormatRules_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        if (e.OriginalSource is DependencyObject element &&
+            FindVisualParent<System.Windows.Controls.ComboBox>(element) is not null)
+        {
+            return;
+        }
+
         if (e.Key is System.Windows.Input.Key.Space or System.Windows.Input.Key.Enter)
         {
             if (sender is System.Windows.Controls.DataGrid { SelectedItem: RuleRowViewModel focusedRule })
