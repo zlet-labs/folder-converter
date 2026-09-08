@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: publish-v0.0.3-${{ github.repository }}
+  group: draft-release-${{ github.repository }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -267,7 +267,7 @@ jobs:
             if (-not [string]::IsNullOrWhiteSpace($ExpectedHash)) {
               $expectedDigest = "sha256:$ExpectedHash"
               if ($asset.digest -ne $expectedDigest) {
-                throw "Unexpected digest for $Name: $($asset.digest); expected $expectedDigest."
+                throw "Unexpected digest for ${Name}: $($asset.digest); expected $expectedDigest."
               }
             }
           }
