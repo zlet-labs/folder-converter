@@ -182,7 +182,7 @@ jobs:
           Write-Output "Installer SHA-256: $installerHash"
           Write-Output "Portable SHA-256: $portableHash"
 
-      - name: Create Draft Pre-release and upload assets directly
+      - name: Create Draft Release and upload assets directly
         if: steps.gate.outputs.exists != 'true'
         id: publish
         shell: pwsh
@@ -198,8 +198,7 @@ jobs:
             --target $env:GITHUB_SHA `
             --title $title `
             --notes-file "${{ steps.meta.outputs.notes }}" `
-            --draft `
-            --prerelease
+            --draft
 
           if ($LASTEXITCODE -ne 0) {
             gh release delete $tag --repo $env:GITHUB_REPOSITORY --yes --cleanup-tag *> $null
@@ -235,7 +234,8 @@ jobs:
               "- Installer and portable ZIP were uploaded directly to GitHub Release.",
               "- No Actions artifacts were created.",
               "- Local packaging files were removed from the temporary runner.",
-              "- Release remains Draft + Pre-release and is not published automatically.",
+              "- Release remains Draft and is not published automatically.",
+              "- Draft is not marked as a GitHub Pre-release by default.",
               "- Real Microsoft Office integration and manual clean-machine verification were not run on the hosted runner."
             ) | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
             exit 0
