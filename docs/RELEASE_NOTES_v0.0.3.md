@@ -3,6 +3,8 @@
 [English](#english) · [Русский](#русский)
 
 > **PRE-ALPHA · Windows x64 · Local processing only**
+>
+> GitHub classification: **standard Release** (`prerelease=false`). PRE-ALPHA describes product maturity, not GitHub Pre-release status.
 
 ## English
 
@@ -44,7 +46,8 @@ Microsoft Office is not included in Zlet Converter.
 
 ### Important notes
 
-- This release is **PRE-ALPHA**.
+- This release has **PRE-ALPHA product maturity**.
+- The GitHub release is a standard Release, not a GitHub Pre-release.
 - Files are processed locally; document contents are not uploaded to a cloud service.
 - Existing destination files/directories are not silently overwritten.
 - The installer is currently unsigned, so Windows may show an Unknown publisher or SmartScreen warning.
@@ -56,7 +59,7 @@ Microsoft Office is not included in Zlet Converter.
 
 ### Verification status
 
-The publication workflow runs restore, Release build, the normal automated test suite, installer/portable packaging and SHA-256 validation before publishing the pre-release.
+The publication workflow ran restore, Release build, the normal automated test suite, installer/portable packaging and SHA-256 validation before publishing the release.
 
 The latest Preview filtering/sorting/numbering/alignment changes received a manual UI sanity pass before release. Full clean-machine verification and real Microsoft Office integration tests remain separate opt-in/manual verification and are not claimed as passed unless they were actually run.
 
@@ -67,6 +70,8 @@ Full manual checklist: [`docs/manual-clean-machine-verification.md`](manual-clea
 ## Русский
 
 Zlet Converter v0.0.3 — PRE-ALPHA релиз с более понятным пакетным процессом, безопасной локальной конвертацией, удобной навигацией по Preview и полноценным RU/EN интерфейсом.
+
+> Классификация на GitHub: **обычный Release** (`prerelease=false`). PRE-ALPHA обозначает зрелость продукта, а не GitHub Pre-release.
 
 ### Главное в v0.0.3
 
@@ -104,7 +109,8 @@ Microsoft Office в состав Zlet Converter не входит.
 
 ### Важно
 
-- Версия имеет статус **PRE-ALPHA**.
+- Версия имеет зрелость **PRE-ALPHA**.
+- На GitHub это обычный Release, а не GitHub Pre-release.
 - Файлы обрабатываются локально, содержимое документов не отправляется в облачный сервис.
 - Существующие файлы/каталоги результата не перезаписываются молча.
 - Установщик пока не подписан, поэтому Windows может показать Unknown publisher или предупреждение SmartScreen.
@@ -116,7 +122,7 @@ Microsoft Office в состав Zlet Converter не входит.
 
 ### Статус проверки
 
-Workflow публикации выполняет restore, Release build, обычный набор автоматических тестов, сборку installer/portable и проверку SHA-256 до публикации pre-release.
+Workflow публикации выполнил restore, Release build, обычный набор автоматических тестов, сборку installer/portable и проверку SHA-256 до публикации релиза.
 
 Последние изменения Preview: фильтрация, сортировка, нумерация и выравнивание строк прошли ручной UI sanity перед релизом. Полная проверка на чистой машине и реальные Microsoft Office integration tests остаются отдельной opt-in/manual проверкой и не считаются пройденными без фактического запуска.
 
