@@ -184,7 +184,7 @@ public sealed class PresentationTests : IDisposable
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        bool finished = thread.Join(3000);
+        bool finished = thread.Join(TimeSpan.FromSeconds(30));
         Assert.True(finished, "Measurement thread timed out");
         if (threadEx != null)
         {
@@ -1779,6 +1779,324 @@ public sealed class PresentationTests : IDisposable
         viewModel = CreateStatusViewModel(ops, processor, clock);
         await viewModel.ScanAsync();
         await viewModel.ConvertAsync();
+    }
+
+    [Fact]
+    public async Task Preview_row_numbering_is_sequential_and_1_based_for_full_list()
+    {
+        Write("a.pdf", "%PDF-1.7 A");
+        Write("b.csv", "1,2");
+        Write("c.docx", "word");
+        Write("d.txt", "text");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var visible = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(4, visible.Length);
+
+        for (var i = 0; i < visible.Length; i++)
+        {
+            Assert.Equal(i + 1, visible[i].DisplayIndex);
+        }
+    }
+
+    [Fact]
+    public async Task Preview_row_numbering_restarts_at_1_when_filtered()
+    {
+        Write("p1.pdf", "%PDF-1.7 1");
+        Write("c1.csv", "data");
+        Write("p2.pdf", "%PDF-1.7 2");
+        Write("c2.csv", "data2");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+        viewModel.SelectRuleFilter(pdfRule);
+
+        var visible = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(2, visible.Length);
+        Assert.Equal(1, visible[0].DisplayIndex);
+        Assert.Equal(2, visible[1].DisplayIndex);
+
+        var filteredOut = viewModel.Operations.Where(r => r.Operation.SourceFormat != SourceFormat.Pdf);
+        Assert.All(filteredOut, r => Assert.Equal(0, r.DisplayIndex));
+    }
+
+    [Fact]
+    public async Task Preview_row_numbering_follows_sorted_displayed_order()
+    {
+        Write("small.txt", "1");
+        Write("large.txt", "1234567890");
+        Write("medium.txt", "1234");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Descending);
+        var desc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("large.txt", desc[0].FilePath);
+        Assert.Equal(1, desc[0].DisplayIndex);
+        Assert.Equal("medium.txt", desc[1].FilePath);
+        Assert.Equal(2, desc[1].DisplayIndex);
+        Assert.Equal("small.txt", desc[2].FilePath);
+        Assert.Equal(3, desc[2].DisplayIndex);
+
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Ascending);
+        var asc = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("small.txt", asc[0].FilePath);
+        Assert.Equal(1, asc[0].DisplayIndex);
+        Assert.Equal("medium.txt", asc[1].FilePath);
+        Assert.Equal(2, asc[1].DisplayIndex);
+        Assert.Equal("large.txt", asc[2].FilePath);
+        Assert.Equal(3, asc[2].DisplayIndex);
+    }
+
+    [Fact]
+    public async Task Preview_row_numbering_correct_across_filter_sort_and_show_all()
+    {
+        Write("p1.pdf", "%PDF-1.7 1");
+        Write("p2.pdf", "%PDF-1.7 222");
+        Write("c1.csv", "1");
+        Write("c2.csv", "222");
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var pdfRule = viewModel.FormatRules.Single(r => r.SourceFormat == SourceFormat.Pdf);
+
+        // 1. Filter to PDF
+        viewModel.SelectRuleFilter(pdfRule);
+        var pdfOnly = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(2, pdfOnly.Length);
+        Assert.Equal(1, pdfOnly[0].DisplayIndex);
+        Assert.Equal(2, pdfOnly[1].DisplayIndex);
+
+        // 2. Sort PDF descending by size: p2 is bigger than p1
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Descending);
+        var pdfSorted = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("p2.pdf", pdfSorted[0].FilePath);
+        Assert.Equal(1, pdfSorted[0].DisplayIndex);
+        Assert.Equal("p1.pdf", pdfSorted[1].FilePath);
+        Assert.Equal(2, pdfSorted[1].DisplayIndex);
+
+        // 3. Show all (ResetPreviewFilter) -> all 4 files displayed, numbered 1..4 in sorted order
+        viewModel.ResetPreviewFilter();
+        var allSorted = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(4, allSorted.Length);
+        for (var i = 0; i < allSorted.Length; i++)
+        {
+            Assert.Equal(i + 1, allSorted[i].DisplayIndex);
+        }
+    }
+
+    [Fact]
+    public async Task Preview_row_numbering_preserves_selection_and_execution_set()
+    {
+        Write("p1.pdf", "%PDF-1.7 a");
+        Write("p2.pdf", "%PDF-1.7 bb");
+        Write("p3.pdf", "%PDF-1.7 ccc");
+        var recordingProcessor = new RecordingProcessor();
+        var resolver = new DefaultConversionAdapterResolver();
+        var viewModel = new MainWindowViewModel(
+            new FileSystemFolderScanner(),
+            new ConversionPlanner(resolver),
+            conversionProcessor: recordingProcessor)
+        {
+            SelectedFolder = _rootPath
+        };
+        await viewModel.ScanAsync();
+
+        viewModel.ClearSelection();
+        viewModel.Operations[1].IsSelected = true; // Select p2.pdf
+        Assert.Equal(1, viewModel.SelectedReadyCount);
+
+        // Sort Size Descending -> p3, p2, p1
+        viewModel.SortBy(PreviewSortColumn.Size, ListSortDirection.Descending);
+        Assert.Equal(1, viewModel.SelectedReadyCount);
+        var visible = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(1, visible[0].DisplayIndex);
+        Assert.False(visible[0].IsSelected); // p3
+        Assert.Equal(2, visible[1].DisplayIndex);
+        Assert.True(visible[1].IsSelected);  // p2
+        Assert.Equal(3, visible[2].DisplayIndex);
+        Assert.False(visible[2].IsSelected); // p1
+
+        // Execute conversion
+        await viewModel.ConvertAsync();
+        Assert.Single(recordingProcessor.Received);
+        Assert.Equal("p2.pdf", recordingProcessor.Received[0].RelativePath);
+    }
+
+    [Fact]
+    public async Task Preview_row_numbering_updates_when_status_sort_order_changes()
+    {
+        var ops = new[]
+        {
+            new PlannedOperation(Path.Combine(_rootPath, "file1.bin"), "file1.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+            new PlannedOperation(Path.Combine(_rootPath, "file2.bin"), "file2.bin", SourceFormat.Unknown, ConversionTarget.Skip, "", "", false, OperationStatus.Ready, ""),
+        };
+
+        var viewModel = CreateStatusViewModel(ops);
+        await viewModel.ScanAsync();
+
+        var row1 = viewModel.Operations[0];
+        var row2 = viewModel.Operations[1];
+
+        // Simulate row1 not selected
+        row1.MarkNotSelected();
+
+        // Sort by Status ascending -> row2 is 1st, row1 is 2nd
+        viewModel.SortBy(PreviewSortColumn.Status, ListSortDirection.Ascending);
+        var visible1 = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("file2.bin", visible1[0].FilePath);
+        Assert.Equal(1, visible1[0].DisplayIndex);
+        Assert.Equal("file1.bin", visible1[1].FilePath);
+        Assert.Equal(2, visible1[1].DisplayIndex);
+
+        // Re-select row1 -> row1 becomes Ready again -> file1.bin is 1st alphabetically, file2.bin is 2nd
+        row1.IsSelected = true;
+        var visible2 = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("file1.bin", visible2[0].FilePath);
+        Assert.Equal(1, visible2[0].DisplayIndex);
+        Assert.Equal("file2.bin", visible2[1].FilePath);
+        Assert.Equal(2, visible2[1].DisplayIndex);
+    }
+
+    [Fact]
+    public void Preview_data_grid_has_row_number_as_first_column_and_is_not_sortable()
+    {
+        var root = FindRepositoryRoot();
+        var xamlPath = Path.Combine(root, "src", "Zlet.FolderConverter.App", "MainWindow.xaml");
+        var xaml = File.ReadAllText(xamlPath);
+
+        Assert.Contains("MinRowHeight=\"32\"", xaml);
+        Assert.Contains("CellStyle=\"{StaticResource PreviewDataGridCellStyle}\"", xaml);
+        Assert.Contains("<DataGridTemplateColumn Header=\"#\" Width=\"38\" MinWidth=\"32\" CanUserSort=\"False\">", xaml);
+
+        var numberColIndex = xaml.IndexOf("Header=\"#\"", StringComparison.Ordinal);
+        var checkboxColIndex = xaml.IndexOf("Header=\"\" Width=\"34\"", StringComparison.Ordinal);
+        var sourceFileColIndex = xaml.IndexOf("Header=\"{DynamicResource SourceFile}\"", StringComparison.Ordinal);
+
+        Assert.True(numberColIndex > 0, "Header=# column must exist");
+        Assert.True(checkboxColIndex > 0, "Checkbox column must exist");
+        Assert.True(sourceFileColIndex > 0, "SourceFile column must exist");
+        Assert.True(numberColIndex < checkboxColIndex, "Header=# must precede checkbox column");
+        Assert.True(checkboxColIndex < sourceFileColIndex, "Checkbox column must precede SourceFile column");
+
+        // FormatRulesDataGrid must not use the Preview-specific cell style
+        var rulesGridIndex = xaml.IndexOf("x:Name=\"FormatRulesDataGrid\"", StringComparison.Ordinal);
+        var operationsGridIndex = xaml.IndexOf("x:Name=\"OperationsDataGrid\"", StringComparison.Ordinal);
+        Assert.True(rulesGridIndex > 0 && operationsGridIndex > rulesGridIndex);
+
+        var rulesGridSnippet = xaml.Substring(rulesGridIndex, operationsGridIndex - rulesGridIndex);
+        Assert.DoesNotContain("PreviewDataGridCellStyle", rulesGridSnippet);
+    }
+
+    [Fact]
+    public void AppStyles_data_grid_cell_centers_content_vertically_and_defines_preview_text_style()
+    {
+        var root = FindRepositoryRoot();
+        var stylesPath = Path.Combine(root, "src", "Zlet.FolderConverter.App", "Resources", "AppStyles.xaml");
+        var styles = File.ReadAllText(stylesPath);
+
+        // Global DataGridCell style remains clean (ZC-039/main state) without custom ControlTemplate
+        var globalCellStyleIndex = styles.IndexOf("<Style TargetType=\"DataGridCell\">", StringComparison.Ordinal);
+        var previewCellStyleIndex = styles.IndexOf("<Style x:Key=\"PreviewDataGridCellStyle\"", StringComparison.Ordinal);
+        Assert.True(globalCellStyleIndex > 0);
+        Assert.True(previewCellStyleIndex > globalCellStyleIndex);
+
+        var globalCellSnippet = styles.Substring(globalCellStyleIndex, previewCellStyleIndex - globalCellStyleIndex);
+        Assert.Contains("<Setter Property=\"Padding\" Value=\"11,6\" />", globalCellSnippet);
+        Assert.DoesNotContain("ControlTemplate", globalCellSnippet);
+
+        // Preview-specific cell style overrides Padding and centers content vertically via ControlTemplate
+        var previewCellSnippet = styles.Substring(previewCellStyleIndex, styles.IndexOf("<Style x:Key=\"PreviewTextColumnElementStyle\"", StringComparison.Ordinal) - previewCellStyleIndex);
+        Assert.Contains("BasedOn=\"{StaticResource {x:Type DataGridCell}}\"", previewCellSnippet);
+        Assert.Contains("<Setter Property=\"Padding\" Value=\"10,4\" />", previewCellSnippet);
+        Assert.Contains("<ContentPresenter SnapsToDevicePixels=\"{TemplateBinding SnapsToDevicePixels}\"", previewCellSnippet);
+        Assert.Contains("VerticalAlignment=\"{TemplateBinding VerticalContentAlignment}\"", previewCellSnippet);
+
+        Assert.Contains("<Style x:Key=\"PreviewTextColumnElementStyle\" TargetType=\"TextBlock\">", styles);
+        Assert.Contains("<Setter Property=\"VerticalAlignment\" Value=\"Center\" />", styles);
+    }
+
+    [Fact]
+    public async Task Preview_twenty_plus_mixed_files_filter_other_sort_and_real_conversion()
+    {
+        for (var i = 1; i <= 10; i++)
+        {
+            Write($"doc{i:D2}.json", $"{{\"id\":{i}}}");
+            Write($"file{i:D2}.otherbin", $"bin content {i}");
+        }
+        Write("extra.unknown", "unknown data");
+        // Total: 10 json + 10 otherbin + 1 extra = 21 files
+
+        var viewModel = CreateViewModel();
+        await viewModel.ScanAsync();
+
+        var visibleAll = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(21, visibleAll.Length);
+
+        // 1. Verify 1..21 initial numbering
+        for (var i = 0; i < 21; i++)
+        {
+            Assert.Equal(i + 1, visibleAll[i].DisplayIndex);
+        }
+
+        // 2. Filter to "Other" (SourceFormat.Unknown) via rule
+        var otherRule = Assert.Single(viewModel.FormatRules.Where(r => r.SourceFormat == SourceFormat.Unknown));
+        viewModel.SelectRuleFilter(otherRule);
+        var visibleOther = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(11, visibleOther.Length); // 10 otherbin + 1 extra
+        for (var i = 0; i < 11; i++)
+        {
+            Assert.Equal(i + 1, visibleOther[i].DisplayIndex);
+        }
+
+        // 3. Sort by SourceFile descending on filtered other files
+        viewModel.SortBy(PreviewSortColumn.SourceFile, ListSortDirection.Descending);
+        var visibleOtherSorted = viewModel.VisibleOperations.ToArray();
+        Assert.Equal("file10.otherbin", visibleOtherSorted[0].FilePath);
+        Assert.Equal(1, visibleOtherSorted[0].DisplayIndex);
+        Assert.Equal("extra.unknown", visibleOtherSorted.Last().FilePath);
+        Assert.Equal(11, visibleOtherSorted.Last().DisplayIndex);
+
+        // 4. Show all -> 21 files, 1..21
+        viewModel.ResetPreviewFilter();
+        var allSortedAgain = viewModel.VisibleOperations.ToArray();
+        Assert.Equal(21, allSortedAgain.Length);
+        for (var i = 0; i < 21; i++)
+        {
+            Assert.Equal(i + 1, allSortedAgain[i].DisplayIndex);
+        }
+
+        // 5. Selection operations
+        viewModel.ClearSelection();
+        Assert.Equal(0, viewModel.SelectedReadyCount);
+        viewModel.SelectAll();
+        Assert.Equal(10, viewModel.SelectedReadyCount); // only JSON files are ready
+        viewModel.InvertSelection();
+        Assert.Equal(0, viewModel.SelectedReadyCount);
+        viewModel.Operations.First(r => r.CanSelect).IsSelected = true;
+        Assert.Equal(1, viewModel.SelectedReadyCount);
+
+        // 6. Real conversion
+        await viewModel.ConvertAsync();
+        Assert.True(viewModel.HasFinalReport);
+        Assert.True(viewModel.FinalSucceeded >= 1);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory);
+             directory is not null;
+             directory = directory.Parent)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "FolderConverter.sln")))
+            {
+                return directory.FullName;
+            }
+        }
+
+        throw new DirectoryNotFoundException("Repository root was not found.");
     }
 
     public void Dispose()

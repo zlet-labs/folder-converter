@@ -130,8 +130,28 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool IsExcelOfficeAvailable => IsOfficeAvailable(OfficeApplicationKind.Excel);
     public bool IsPowerPointOfficeAvailable => IsOfficeAvailable(OfficeApplicationKind.PowerPoint);
 
-    public IEnumerable<OperationRowViewModel> VisibleOperations =>
-        ApplySort(Operations.Where(MatchesSelectedFilter), _sortColumn, _sortDirection).ToArray();
+    public IEnumerable<OperationRowViewModel> VisibleOperations
+    {
+        get
+        {
+            var sorted = ApplySort(Operations.Where(MatchesSelectedFilter), _sortColumn, _sortDirection).ToArray();
+            var visibleSet = new HashSet<OperationRowViewModel>(sorted);
+            foreach (var op in Operations)
+            {
+                if (!visibleSet.Contains(op))
+                {
+                    op.DisplayIndex = 0;
+                }
+            }
+
+            for (var i = 0; i < sorted.Length; i++)
+            {
+                sorted[i].DisplayIndex = i + 1;
+            }
+
+            return sorted;
+        }
+    }
 
     public string SelectedFolder
     {

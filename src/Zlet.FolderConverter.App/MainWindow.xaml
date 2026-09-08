@@ -636,10 +636,33 @@
                                       ItemsSource="{Binding VisibleOperations}"
                                       AutoGenerateColumns="False"
                                       BorderThickness="0"
+                                      MinRowHeight="32"
+                                      CellStyle="{StaticResource PreviewDataGridCellStyle}"
                                       CanUserSortColumns="True"
                                       Sorting="OperationsDataGrid_Sorting"
                                       Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="#" Width="38" MinWidth="32" CanUserSort="False">
+                                        <DataGridTemplateColumn.HeaderStyle>
+                                            <Style TargetType="DataGridColumnHeader"
+                                                   BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                                <Setter Property="Cursor" Value="Arrow" />
+                                                <Setter Property="IsHitTestVisible" Value="False" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                                <Setter Property="Padding" Value="0" />
+                                            </Style>
+                                        </DataGridTemplateColumn.HeaderStyle>
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding DisplayIndex}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           TextAlignment="Center"
+                                                           Foreground="{StaticResource TextTertiaryBrush}"
+                                                           FontSize="13" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTemplateColumn Header="" Width="34" CanUserSort="False">
                                         <DataGridTemplateColumn.HeaderStyle>
                                             <Style TargetType="DataGridColumnHeader"
@@ -666,6 +689,7 @@
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding FilePath}"
                                                            ToolTip="{Binding SourcePath}"
+                                                           VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis" />
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -675,7 +699,8 @@
                                                         Width="110"
                                                         MinWidth="85"
                                                         CanUserSort="True"
-                                                        SortMemberPath="Action" />
+                                                        SortMemberPath="Action"
+                                                        ElementStyle="{StaticResource PreviewTextColumnElementStyle}" />
                                     <DataGridTemplateColumn Header="{DynamicResource Status}"
                                                             Width="140"
                                                             MinWidth="95"
@@ -683,7 +708,7 @@
                                                             SortMemberPath="Status">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Grid HorizontalAlignment="Stretch">
+                                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
                                                     <Border Style="{StaticResource StatusChipBorderStyle}"
                                                             ToolTip="{Binding Message}">
                                                         <TextBlock Text="{Binding Status}"
@@ -702,6 +727,7 @@
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding ResultPath}"
                                                            ToolTip="{Binding TargetPath}"
+                                                           VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis" />
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -711,13 +737,15 @@
                                                         Width="58"
                                                         MinWidth="40"
                                                         CanUserSort="True"
-                                                        SortMemberPath="Size" />
+                                                        SortMemberPath="Size"
+                                                        ElementStyle="{StaticResource PreviewTextColumnElementStyle}" />
                                     <DataGridTextColumn Header="{DynamicResource Time}"
                                                         Binding="{Binding ExecutionTimeText}"
                                                         Width="54"
                                                         MinWidth="36"
                                                         CanUserSort="True"
-                                                        SortMemberPath="Time" />
+                                                        SortMemberPath="Time"
+                                                        ElementStyle="{StaticResource PreviewTextColumnElementStyle}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>
