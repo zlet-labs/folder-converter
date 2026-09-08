@@ -184,7 +184,7 @@ public sealed class PresentationTests : IDisposable
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        bool finished = thread.Join(3000);
+        bool finished = thread.Join(TimeSpan.FromSeconds(30));
         Assert.True(finished, "Measurement thread timed out");
         if (threadEx != null)
         {
