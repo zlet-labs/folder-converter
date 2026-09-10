@@ -6,21 +6,32 @@ public sealed class DefaultConversionAdapterResolver
     : IConversionAdapterResolver, IConversionBatchLifecycle
 {
     private readonly IReadOnlyList<IConversionAdapter> _adapters;
-    private readonly IMicrosoftOfficeWorkerRunner? _workerRunner;
+    private readonly IMicrosoftOfficeWorkerRunner? _officeWorkerRunner;
+    private readonly IDoclingWorkerRunner? _doclingWorkerRunner;
 
     public DefaultConversionAdapterResolver()
         : this(
             new MicrosoftOfficeCapabilityDetector(),
-            new MicrosoftOfficeWorkerProcessRunner())
+            new MicrosoftOfficeWorkerProcessRunner(),
+            new DoclingWorkerProcessRunner())
     {
     }
 
     public DefaultConversionAdapterResolver(
         IMicrosoftOfficeCapabilityDetector capabilityDetector,
         IMicrosoftOfficeWorkerRunner workerRunner)
-        : this(CreateDefaultAdapters(capabilityDetector, workerRunner))
+        : this(capabilityDetector, workerRunner, new DoclingWorkerProcessRunner())
     {
-        _workerRunner = workerRunner;
+    }
+
+    public DefaultConversionAdapterResolver(
+        IMicrosoftOfficeCapabilityDetector capabilityDetector,
+        IMicrosoftOfficeWorkerRunner officeWorkerRunner,
+        IDoclingWorkerRunner doclingWorkerRunner)
+        : this(CreateDefaultAdapters(capabilityDetector, officeWorkerRunner, doclingWorkerRunner))
+    {
+        _officeWorkerRunner = officeWorkerRunner;
+        _doclingWorkerRunner = doclingWorkerRunner;
     }
 
     public DefaultConversionAdapterResolver(IEnumerable<IConversionAdapter> adapters)
@@ -31,15 +42,40 @@ public sealed class DefaultConversionAdapterResolver
     public IConversionAdapter? Resolve(SourceFormat sourceFormat, ConversionTarget target) =>
         _adapters.FirstOrDefault(adapter => adapter.CanConvert(sourceFormat, target));
 
-    Task IConversionBatchLifecycle.BeginBatchAsync(CancellationToken cancellationToken) =>
-        _workerRunner?.BeginBatchAsync(cancellationToken) ?? Task.CompletedTask;
+    async Task IConversionBatchLifecycle.BeginBatchAsync(CancellationToken cancellationToken)
+    {
+        if (_officeWorkerRunner is not null)
+        {
+            await _officeWorkerRunner.BeginBatchAsync(cancellationToken);
+        }
+        if (_doclingWorkerRunner is not null)
+        {
+            await _doclingWorkerRunner.BeginBatchAsync(cancellationToken);
+        }
+    }
 
-    Task IConversionBatchLifecycle.EndBatchAsync() =>
-        _workerRunner?.EndBatchAsync() ?? Task.CompletedTask;
+    async Task IConversionBatchLifecycle.EndBatchAsync()
+    {
+        try
+        {
+            if (_officeWorkerRunner is not null)
+            {
+                await _officeWorkerRunner.EndBatchAsync();
+            }
+        }
+        finally
+        {
+            if (_doclingWorkerRunner is not null)
+            {
+                await _doclingWorkerRunner.EndBatchAsync();
+            }
+        }
+    }
 
     private static IConversionAdapter[] CreateDefaultAdapters(
         IMicrosoftOfficeCapabilityDetector capabilityDetector,
-        IMicrosoftOfficeWorkerRunner workerRunner)
+        IMicrosoftOfficeWorkerRunner officeWorkerRunner,
+        IDoclingWorkerRunner doclingWorkerRunner)
     {
         var validator = new OutputResultValidator();
         return
@@ -49,19 +85,44 @@ public sealed class DefaultConversionAdapterResolver
             new MicrosoftOfficeConversionAdapter(
                 OfficeApplicationKind.Word,
                 capabilityDetector,
-                workerRunner,
+                officeWorkerRunner,
                 validator,
                 temporaryRoot: null),
             new MicrosoftOfficeConversionAdapter(
                 OfficeApplicationKind.Excel,
                 capabilityDetector,
-                workerRunner,
+                officeWorkerRunner,
                 validator,
                 temporaryRoot: null),
             new MicrosoftOfficeConversionAdapter(
                 OfficeApplicationKind.PowerPoint,
                 capabilityDetector,
-                workerRunner,
+                officeWorkerRunner,
+                validator,
+                temporaryRoot: null),
+            new DoclingConversionAdapter(
+                doclingWorkerRunner,
+                validator,
+                temporaryRoot: null),
+            new LegacyOfficeToMarkdownConversionAdapter(
+                OfficeApplicationKind.Word,
+                capabilityDetector,
+                officeWorkerRunner,
+                doclingWorkerRunner,
+                validator,
+                temporaryRoot: null),
+            new LegacyOfficeToMarkdownConversionAdapter(
+                OfficeApplicationKind.Excel,
+                capabilityDetector,
+                officeWorkerRunner,
+                doclingWorkerRunner,
+                validator,
+                temporaryRoot: null),
+            new LegacyOfficeToMarkdownConversionAdapter(
+                OfficeApplicationKind.PowerPoint,
+                capabilityDetector,
+                officeWorkerRunner,
+                doclingWorkerRunner,
                 validator,
                 temporaryRoot: null)
         ];

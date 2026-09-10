@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Zlet.FolderConverter.Core\Zlet.FolderConverter.Core.csproj" />
@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\ZletBatchConverter.ico" />
+    <None Include="..\Zlet.FolderConverter.DoclingWorker\zlet_docling_worker.py" Link="zlet_docling_worker.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="CopyOfficeWorkerToOutput"

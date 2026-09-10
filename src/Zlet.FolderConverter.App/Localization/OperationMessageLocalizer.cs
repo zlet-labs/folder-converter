@@ -62,7 +62,15 @@ public static class OperationMessageLocalizer
             ["worker_result_missing"] = "OperationOfficeFailure",
             ["powerpoint_already_running"] = "OperationPowerPointRunning",
             ["powerpoint_session_ownership_lost"] = "OperationPowerPointProtected",
-            ["office_com_failure"] = "OperationOfficeFailure"
+            ["office_com_failure"] = "OperationOfficeFailure",
+            ["scanned_pdf_unsupported"] = "ScannedPdfUnsupported",
+            ["docling_worker_missing"] = "DoclingComponentUnavailable",
+            ["docling_worker_timeout"] = "OperationTimeout",
+            ["docling_conversion_failed"] = "DoclingConversionFailed",
+            ["output_invalid_utf8"] = "OperationOutputInvalid",
+            ["markdown_mapping_unsupported"] = "OperationUnsupported",
+            ["intermediate_output_missing"] = "OperationOutputMissing",
+            ["intermediate_file_invalid"] = "OperationOutputInvalid"
         };
 
     private static readonly IReadOnlyDictionary<string, string> KnownMessageKeys =
@@ -89,7 +97,11 @@ public static class OperationMessageLocalizer
             ["Компонент преобразования Microsoft Office недоступен."] = "OperationOfficeComponentUnavailable",
             ["PowerPoint уже запущен. Закройте его и повторите преобразование."] = "OperationPowerPointRunning",
             ["PowerPoint не запустился."] = "OperationPowerPointStartFailed",
-            ["PowerPoint не запустился. Откройте PowerPoint вручную и повторите."] = "OperationPowerPointStartFailedAdvice"
+            ["PowerPoint не запустился. Откройте PowerPoint вручную и повторите."] = "OperationPowerPointStartFailedAdvice",
+            ["PDF не содержит извлекаемого текста (возможно, отсканированный документ). Оптическое распознавание текста (OCR) не поддерживается."] = "ScannedPdfUnsupported",
+            ["Компонент Markdown недоступен."] = "DoclingComponentUnavailable",
+            ["Компонент преобразования Docling недоступен."] = "DoclingComponentUnavailable",
+            ["Не удалось преобразовать документ в Markdown."] = "DoclingConversionFailed"
         };
 
     public static string Localize(

@@ -1123,7 +1123,7 @@ public sealed class PresentationTests : IDisposable
     {
         Write("manual.pdf", "%PDF-1.7");
         Write("test-unknown.abc", "sample unknown data");
-        Write("README-fixtures.txt", "readme text");
+        Write("README-fixtures.unknown", "readme text");
         var viewModel = CreateViewModel();
         await viewModel.ScanAsync();
 
@@ -1136,7 +1136,7 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(2, visible.Length);
         Assert.All(visible, op => Assert.Equal(SourceFormat.Unknown, op.Operation.SourceFormat));
         Assert.Contains(visible, op => op.Operation.RelativePath.EndsWith(".abc", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(visible, op => op.Operation.RelativePath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(visible, op => op.Operation.RelativePath.EndsWith(".unknown", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

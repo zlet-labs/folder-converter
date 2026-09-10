@@ -30,6 +30,7 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
             {
                 ConversionTarget.Skip => _localization.Get("TargetSkip"),
                 ConversionTarget.Copy => _localization.Get("TargetCopy"),
+                ConversionTarget.Markdown => _localization.Get("TargetMarkdown"),
                 ConversionTarget.Csv => _localization.Get("TargetCsvSheets"),
                 ConversionTarget.Tsv => _localization.Get("TargetTsvSheets"),
                 _ => target.ToDisplayName()
@@ -100,6 +101,7 @@ public sealed class RuleRowViewModel : INotifyPropertyChanged
             {
                 ConversionTarget.Skip => _localization.Get("TargetSkip"),
                 ConversionTarget.Copy => _localization.Get("TargetCopy"),
+                ConversionTarget.Markdown => _localization.Get("TargetMarkdown"),
                 ConversionTarget.Csv => _localization.Get("TargetCsvSheets"),
                 ConversionTarget.Tsv => _localization.Get("TargetTsvSheets"),
                 _ => option.Target.ToDisplayName()
