@@ -6,15 +6,18 @@
     "total_models_mb": 566.47
   },
   "startup_timings_seconds": {
-    "import_docling": 0.0474,
-    "import_document_converter": 6.4164,
-    "document_converter_init": 0.0889,
-    "total_cold_init": 6.5053
+    "import_docling": 0.0402,
+    "import_document_converter": 6.8135,
+    "document_converter_init": 0.0953,
+    "total_cold_init": 6.9088
   },
-  "cold_vs_warm_f01": {
-    "cold_duration_seconds": 18.3546,
-    "cold_peak_tree_rss_mb": 1088.62,
-    "warm_duration_seconds": 12.4993,
-    "warm_peak_tree_rss_mb": 1061.11
+  "f01_conversion_benchmarks": {
+    "cold_child_process_duration_seconds": 16.2215,
+    "cold_child_process_peak_rss_mb": 1107.57,
+    "in_process_first_conversion_duration_seconds": 12.406,
+    "in_process_first_conversion_peak_rss_mb": 1099.75,
+    "in_process_warm_conversion_duration_seconds": 2.9465,
+    "in_process_warm_conversion_peak_rss_mb": 1084.87,
+    "suite_run_f01_duration_seconds": 10.6004
   }
 }

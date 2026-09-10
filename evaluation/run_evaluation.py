@@ -303,6 +303,29 @@ def run_suite(fixture_names, arm="both", determinism_check=True):
                 elif fname not in EXPECTED_EMPTY and meta_doc["char_count"] == 0:
                     print(f"  --> ZERO CHARACTERS extracted for non-empty fixture {fname}")
                     failed_fixtures.append((fname, "Zero characters extracted"))
+
+            # Automatic mechanical OCR validation for F06
+            if fname == "F06_scanned.pdf" and meta_doc["success"]:
+                try:
+                    from evaluation.validate_ocr import run_ocr_validation
+                except ImportError:
+                    try:
+                        from validate_ocr import run_ocr_validation
+                    except ImportError:
+                        run_ocr_validation = None
+                if run_ocr_validation:
+                    print("  --> Executing mechanical OCR accuracy validation against ground truth...")
+                    ocr_res = run_ocr_validation()
+                    meta_doc["ocr_validation"] = {
+                        "normalized_chars": ocr_res["ground_truth"]["normalized_character_count"],
+                        "character_errors": ocr_res["metrics"]["character_errors"],
+                        "exact_match": ocr_res["metrics"]["exact_match"],
+                        "cer_percent": ocr_res["metrics"]["character_error_rate_percent"],
+                        "recall_percent": ocr_res["metrics"]["character_recall_percent"]
+                    }
+                    if not ocr_res["metrics"]["exact_match"]:
+                        failed_fixtures.append((fname, f"OCR validation mismatch: CER {ocr_res['metrics']['character_error_rate_percent']}%"))
+
             
         # Baseline arm
         if arm in ("baseline", "both"):
@@ -356,8 +379,9 @@ def run_suite(fixture_names, arm="both", determinism_check=True):
         suite_type = 'gate' if len(fixture_names) == 8 else 'all' if len(fixture_names) == 15 else 'custom'
         det_path = OUTPUTS_DIR / f"determinism_{suite_type}.json"
         det_path.write_text(json.dumps(determinism_results, indent=2), encoding="utf-8")
-        # Also maintain a master determinism_summary.json
-        (OUTPUTS_DIR / "determinism_summary.json").write_text(json.dumps(determinism_results, indent=2), encoding="utf-8")
+        # Also maintain a master determinism_summary.json for all fixtures
+        if suite_type == 'all':
+            (OUTPUTS_DIR / "determinism_summary.json").write_text(json.dumps(determinism_results, indent=2), encoding="utf-8")
         print(f"Determinism verification evidence written to {det_path}")
 
     # Save summary

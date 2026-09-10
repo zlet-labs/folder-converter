@@ -5,14 +5,15 @@
 Based on empirical benchmarking across 15 synthetic, degraded, and structural fixtures on Windows x64, the verdict is **USE DOCLING SELECTIVELY** as an isolated out-of-process conversion worker for Zlet Converter.
 
 ### Key Justifications:
-1. **Layout & Structural Extraction:** Docling successfully resolved 2D multi-column reading order on an interleaved stream order fixture (`F02`), converted complex tables into structured GitHub-Flavored Markdown (`F03`), eliminated running headers and footers as furniture artifacts (`F04`), dehyphenated broken line wraps while preserving compound terms (`F05`), and recognized degraded raster text through built-in RapidOCR without external Tesseract dependencies (`F06`: 482/482 characters recognized).
-2. **Sub-second Office & HTML Ingestion:** Office documents (DOCX `F08`: 0.14s, PPTX `F09`: 0.06s, XLSX `F10`: 0.01s) and HTML (`F11`: 0.02s) convert without heavyweight ML pipeline overhead and without requiring Microsoft Office COM automation. Native DOCX `<w:hyperlink>` XML elements are converted into Markdown links with distinct anchor text.
+1. **Layout & Structural Extraction:** Docling successfully resolved 2D multi-column reading order on an interleaved stream order fixture (`F02`), converted complex tables into structured GitHub-Flavored Markdown (`F03`), eliminated running headers and footers as furniture artifacts (`F04`), dehyphenated broken line wraps while preserving compound terms (`F05`), and recognized degraded raster text through built-in RapidOCR without external Tesseract dependencies (`F06`: 475/475 normalized semantic characters recognized with 0 character errors, CER 0.00%, exact normalized match verified mechanically against ground truth in `evaluation/outputs/ocr_validation.json`; raw Markdown length is 482 characters including 7 heading and newline formatting tokens).
+2. **Sub-second Office & HTML Ingestion:** Office documents (DOCX `F08`: 0.14s–0.33s, PPTX `F09`: 0.04s–0.06s, XLSX `F10`: 0.01s) and HTML (`F11`: 0.04s) convert without heavyweight ML pipeline overhead and without requiring Microsoft Office COM automation. Native DOCX `<w:hyperlink>` XML elements are converted into Markdown links with distinct anchor text.
 3. **Licensing Architecture:** Core Docling code is MIT-licensed, its layout model (`docling-layout-heron`) is Apache-2.0, its table model (`tableformer`) is CDLA-Permissive-2.0, and OCR is Apache-2.0. The audit verified zero strong copyleft (GPL/AGPL) in runtime dependencies; one weak file-level copyleft dependency (`certifi` under MPL-2.0) is present and commercially distributable unmodified. (The test harness uses `fpdf2` under LGPL-3.0 strictly as an offline test fixture generator tool).
 4. **Verified Local Offline Execution:** Intercepting Python socket calls (`connect`, `connect_ex`, `sendto`, `getaddrinfo`, `create_connection`) under offline configuration (`HF_HUB_OFFLINE=1`, dummy proxy) verified 0 outbound network requests or DNS resolutions during tested offline conversions (`F01`, `F06`, `F08`).
 5. **Observed Limitations & Why "SELECTIVELY":**
    - **Flattened List Indentation (`F12`):** Docling flattens multi-tier nested PDF lists to column zero, losing sub-item indentation levels. Indentation restoration must be handled by the Zlet Quality Layer.
-   - **Resource Footprint:** PDF deep-learning conversion demands ~566 MB model cache, ~1.17 GB virtual environment, and ~1.08–1.53 GB process-tree peak RSS with 2–14s per-page CPU execution time.
+   - **Resource Footprint:** PDF deep-learning conversion demands ~566 MB model cache, ~1.17 GB virtual environment, and ~1.07–1.62 GB process-tree peak RSS with 2.4–16.2s per-page CPU execution time.
    - Consequently, Docling should be deployed as an **isolated, optional worker process** with on-demand model acquisition rather than bundled directly into the base lightweight WPF MSI installer.
+
 
 ---
 
@@ -85,51 +86,60 @@ The evaluation executed an empirical conversion benchmark comparing Docling agai
 - **Nested Lists Limitation (`F12`):** While Docling captured list markers (`1.`, `- a.`, `- i.`), it flattened all items to column zero, losing sub-item indentation levels. This is a documented limitation: hierarchical list indentation restoration must be handled by the Zlet Quality Layer.
 
 ### OCR Findings (`F06`)
-- Tested on an image-only PDF with realistic scanner degradation: off-white paper stock (RGB 247, 245, 240), Gaussian scanner noise ($\sigma=3.5$), optical lens blur (radius 0.5), and rotational scanner skew ($-0.75^{\circ}$).
-- Built-in `RapidOCR` triggered automatically on CPU, accurately recognizing 482 of 482 characters on the synthetic degraded sample `F06` (100% character recall on this test fixture).
-- No local Tesseract binary installation was needed. Baseline extracted 0 characters.
+- Tested on an image-only PDF with deterministic, reproducible synthetic scanner degradation (NumPy RNG seed 42): off-white paper stock (RGB 247, 245, 240), Gaussian scanner noise ($\sigma=3.5$), optical lens blur (radius 0.5), and rotational scanner skew ($-0.75^{\circ}$).
+- Built-in `RapidOCR` triggered automatically on CPU. Automated mechanical verification (`evaluation/validate_ocr.py`) comparing canonical ground truth against extracted Markdown confirmed:
+  - **Ground Truth Reference:** 475 normalized semantic characters (476 raw characters, 66 words).
+  - **Extracted Docling Output:** 475 normalized semantic characters (482 raw Markdown characters including `## ` header markup and newline delimiters, 66 words).
+  - **Exact Normalized Match:** `True` (0 character edit distance errors, 0 word errors).
+  - **Character Error Rate (CER):** **0.00%**.
+  - **Character Recall / Accuracy:** **100.00%** (475/475 semantic characters).
+  - **Baseline Extractor (`pypdf`):** Extracted 0 characters (no OCR capability).
+  - Persisted machine-readable evidence: `evaluation/outputs/ocr_validation.json`.
 
 ### Cyrillic & Multilingual Unicode Findings (`F07`, `F15`)
 - Cyrillic Russian text was extracted without encoding degradation or mojibake (`F07`: 553 chars).
 - In the mixed trilingual fixture (`F15`), Latin diacritics (`café`, `über`), Russian Cyrillic (`Привет мир`), and Chinese CJK (`测试中文文档解析能力: 你好世界`) were preserved simultaneously in valid UTF-8 Markdown, backed by mandatory CJK TrueType font validation in the fixture generator.
 
 ### DOCX, PPTX, XLSX, HTML Applicability (`F08`–`F11`)
-- **DOCX (`F08`):** Converted in **143 ms**. Converted native Word `<w:hyperlink>` XML elements into proper Markdown links (`[Zlet Converter GitHub Repository](https://github.com/zlet-labs/zlet-converter)`) alongside headings, lists, and tables.
-- **PPTX (`F09`):** Converted in **57 ms**. Generated clean markdown slides with `#` slide headers, bullet points, and tables.
-- **XLSX (`F10`):** Converted in **11 ms**. Each worksheet was formatted into a distinct markdown table.
-- **HTML (`F11`):** Converted in **21 ms**. Converted standard HTML markup directly into markdown with hyperlinked anchors.
+- **DOCX (`F08`):** Converted in **142–328 ms** (0.14s in gate suite, 0.33s in full suite). Converted native Word `<w:hyperlink>` XML elements into proper Markdown links (`[Zlet Converter GitHub Repository](https://github.com/zlet-labs/zlet-converter)`) alongside headings, lists, and tables.
+- **PPTX (`F09`):** Converted in **39–58 ms**. Generated clean markdown slides with `#` slide headers, bullet points, and tables.
+- **XLSX (`F10`):** Converted in **14 ms**. Each worksheet was formatted into a distinct markdown table.
+- **HTML (`F11`):** Converted in **39 ms**. Converted standard HTML markup directly into markdown with hyperlinked anchors.
 
 ### Determinism Verification
 - Executed consecutive runs across all 14 content-bearing fixtures (`F01`–`F13`, `F15`).
 - Cryptographic SHA-256 digest comparison confirmed byte-for-byte equality across all tested fixtures (`run1_sha256 == run2_sha256`), with full hash logs recorded in `evaluation/outputs/determinism_all.json`.
 
 ### Failure & Error Handling (`F13`, `F14`)
-- **Empty Document (`F13`):** Docling processed the single blank page in 3.01s and emitted 0 characters cleanly without exception or null pointer errors.
-- **Corrupted Document (`F14`):** When presented with invalid binary header data, Docling threw a structured `ConversionError` from `docling-parse` within 529 ms. It did not crash the host process or hang indefinitely.
+- **Empty Document (`F13`):** Docling processed the single blank page in 1.97–2.68s and emitted 0 characters cleanly without exception or null pointer errors.
+- **Corrupted Document (`F14`):** When presented with invalid binary header data, Docling threw a structured `ConversionError` from `docling-parse` within 385 ms. It did not crash the host process or hang indefinitely.
 
 ---
 
 ## Comparison Summary
 
+The values below reflect the full 15-fixture evaluation run recorded in `evaluation/outputs/summary_all_both.json`:
+
 | Fixture | Description | Docling Time | Docling RSS (Peak) | Docling Quality | Baseline Time | Baseline Quality |
 |---------|-------------|--------------|--------------------|-----------------|---------------|------------------|
-| `F01` | Simple text PDF | 27.38s | 1092.6 MB | High (clean headings & flow) | 0.34s | Medium (raw text) |
-| `F02` | Multi-column PDF (interleaved stream) | 4.21s | 1089.6 MB | High (2D reading order resolved) | 0.008s | Poor (interleaved sentences) |
-| `F03` | Table PDF | 19.27s | 1429.6 MB | High (GFM markdown table) | 0.006s | Poor (unstructured text) |
-| `F04` | Header/Footer PDF | 7.45s | 1167.0 MB | High (furniture stripped) | 0.008s | Poor (text polluted) |
-| `F05` | Broken Wrap PDF | 3.98s | 1168.8 MB | High (dehyphenated) | 0.006s | Medium (broken lines) |
-| `F06` | Scanned Image PDF (degraded) | 14.40s | 1536.1 MB | High (482/482 chars OCR recall) | 0.007s | Failed (0 chars extracted) |
-| `F07` | Cyrillic PDF | 4.43s | 1228.3 MB | High (clean UTF-8) | 0.015s | High (text extracted) |
-| `F08` | Structured DOCX (hyperlink element) | 0.43s | 1098.1 MB | High (headings, lists, table, link) | 0.038s | Low (flat text lines) |
-| `F09` | Slide Deck PPTX | 0.14s | 1104.2 MB | High (slides, tables, bullets) | 0.012s | Low (flat text) |
-| `F10` | Multi-Sheet XLSX | 0.02s | 1104.5 MB | High (multi-table markdown) | 0.009s | Medium (pipe delimited) |
-| `F11` | Semantic HTML | 0.04s | 1104.6 MB | High (GFM formatting & links) | 0.002s | Low (stripped tags) |
-| `F12` | Nested Lists PDF | 4.08s | 1234.2 MB | Partial / Limitation (flattened list) | 0.005s | Medium (flat text) |
-| `F13` | Empty PDF | 3.76s | 1237.3 MB | High (clean 0-byte output) | 0.002s | High (0-byte output) |
-| `F14` | Corrupted PDF | 0.40s | 1179.3 MB | High (graceful ConversionError) | 0.002s | High (graceful PdfStreamError) |
-| `F15` | Mixed Unicode PDF | 3.88s | 1245.5 MB | High (Latin + Cyrillic + CJK) | 0.010s | High (Unicode preserved) |
+| `F01` | Simple text PDF | 10.60s | 1072.5 MB | High (clean headings & flow; first in-suite conversion loads model weights) | 0.1921s | Medium (raw text) |
+| `F02` | Multi-column PDF (interleaved stream) | 5.52s | 1176.2 MB | High (2D reading order resolved) | 0.0061s | Poor (interleaved sentences) |
+| `F03` | Table PDF | 9.73s | 1508.9 MB | High (GFM markdown table) | 0.0043s | Poor (unstructured text) |
+| `F04` | Header/Footer PDF | 4.50s | 1251.4 MB | High (furniture stripped) | 0.0046s | Poor (text polluted) |
+| `F05` | Broken Wrap PDF | 2.42s | 1252.0 MB | High (dehyphenated) | 0.0039s | Medium (broken lines) |
+| `F06` | Scanned Image PDF (degraded) | 9.94s | 1620.3 MB | High (475/475 norm chars, 0 errors, CER 0.00%) | 0.0058s | Failed (0 chars extracted) |
+| `F07` | Cyrillic PDF | 3.22s | 1315.0 MB | High (clean UTF-8) | 0.0110s | High (text extracted) |
+| `F08` | Structured DOCX (hyperlink element) | 0.33s | 1255.1 MB | High (headings, lists, table, link) | 0.0298s | Low (flat text lines) |
+| `F09` | Slide Deck PPTX | 0.06s | 1261.5 MB | High (slides, tables, bullets) | 0.0076s | Low (flat text) |
+| `F10` | Multi-Sheet XLSX | 0.01s | 1261.9 MB | High (multi-table markdown) | 0.0053s | Medium (pipe delimited) |
+| `F11` | Semantic HTML | 0.04s | 1261.9 MB | High (GFM formatting & links) | 0.0030s | Low (stripped tags) |
+| `F12` | Nested Lists PDF | 3.28s | 1317.5 MB | Partial / Limitation (flattened list) | 0.0058s | Medium (flat text) |
+| `F13` | Empty PDF | 2.68s | 1322.3 MB | High (clean 0-byte output) | 0.0016s | High (0-byte output) |
+| `F14` | Corrupted PDF | 0.38s | 1283.2 MB | High (graceful ConversionError) | 0.0005s | High (graceful PdfStreamError) |
+| `F15` | Mixed Unicode PDF | 2.40s | 1329.1 MB | High (Latin + Cyrillic + CJK) | 0.0065s | High (Unicode preserved) |
 
 > *Note on Memory Measurement:* `Docling RSS (Peak)` represents true process-tree peak RSS (parent process plus all child processes) continuously monitored at 10ms intervals during conversion, avoiding point-in-time GC sampling artifacts.
+
 
 ---
 
@@ -138,7 +148,7 @@ The evaluation executed an empirical conversion benchmark comparing Docling agai
 Offline execution was validated through `evaluation/verify_offline.py`:
 1. Environment variables set: `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, `HTTP_PROXY=http://0.0.0.0:1`, `HTTPS_PROXY=http://0.0.0.0:1`, `NO_PROXY=""`.
 2. Python socket and DNS APIs were intercepted (`socket.connect`, `socket.connect_ex`, `socket.sendto`, `socket.getaddrinfo`, `socket.gethostbyname`, `socket.create_connection`) to log and immediately block any outgoing network connection attempt.
-3. Automated test script verified that all conversions succeeded offline (`F01`: 8.28s, `F06` degraded OCR: 6.57s, `F08`: 0.14s) and strictly exits non-zero if any conversion failure or network call occurs.
+3. Automated test script verified that all conversions succeeded offline (`F01`: 9.08s, `F06` degraded OCR: 9.05s, `F08`: 0.19s) and strictly exits non-zero if any conversion failure or network call occurs.
 4. **Observed Evidence:** All 3 test fixtures converted successfully offline. Exactly **0 network connection attempts or name lookups** were intercepted across the runtime session.
 5. **Scope & Privacy Note:** While this confirms that Docling and its evaluated Python/ONNX models do not initiate network calls or telemetry at the Python socket layer during offline execution, it is scoped to Python-level socket observation rather than OS-level kernel packet inspection. For air-gapped production environments, standard OS firewall rules or containerization should be used.
 
@@ -188,29 +198,40 @@ An automated audit of all 107 installed packages in the evaluation virtual envir
 
 ## CPU, RAM, Startup & Performance Summary
 
-- **Package Install Size (Disk):** 1171.34 MB (venv).
-- **Model Weights (Disk):** 566.47 MB (HuggingFace Hub: 505.45 MB, RapidOCR: 61.02 MB).
-- **Process Startup & Init Timing:**
-  - `import docling`: 0.15s.
-  - `from docling.document_converter import DocumentConverter`: 10.41s.
-  - `DocumentConverter()` instantiation: 0.11s.
-  - Total cold process initialization: **~10.5s**.
-- **Cold vs. Warm Execution & Memory (`F01`):**
-  - **Cold Launch + First Conversion:** **25.68s** total duration; **1079.4 MB** process-tree peak RSS.
-  - **Warm Conversion:** **12.30s** duration; **1093.8 MB** process-tree peak RSS.
-- **Runtime Memory (Process-Tree Peak RSS across Suite):**
-  - Lightweight Office / HTML parsing: ~100–200 MB in isolation; within a pre-loaded Docling session, stays flat around baseline load (~1176–1182 MB).
-  - PDF layout and OCR conversion: **1090 MB – 1533 MB** (peaking at 1532.6 MB on degraded raster OCR fixture `F06`).
-- **Empirical Throughput (Intel i5-11400H CPU):**
-  - **Non-PDF Formats:**
-    - Structured DOCX (`F08`): **~7 documents/second** (0.14s).
-    - Slide Deck PPTX (`F09`): **~17 presentations/second** (0.057s).
-    - Multi-Sheet XLSX (`F10`): **~90 workbooks/second** (0.011s).
-    - Semantic HTML (`F11`): **~48 documents/second** (0.021s).
-  - **PDF Formats:**
-    - Dense table parsing (`F03`): **~0.07 pages/second** (14.54s per page due to TableFormer deep-learning inference).
-    - Digital single-page PDFs (`F01`, `F02`, `F04`, `F05`, `F07`, `F12`, `F15`): **0.25–0.40 pages/second** (2.5–4.6s per page).
-    - Degraded scanned PDF with OCR (`F06`): **~0.11 pages/second** (8.94s per page).
+Every numeric value below is sourced directly from committed evidence files (`evaluation/outputs/performance_footprint.json`, `evaluation/outputs/summary_all_both.json`, and `evaluation/outputs/summary_gate_both.json`).
+
+- **Storage Footprint (`performance_footprint.json`):**
+  - Python Virtual Environment: **1171.34 MB** (`evaluation/venv`).
+  - Model Weights Cache: **566.47 MB** total (Hugging Face hub cache: 505.45 MB; RapidOCR models: 61.02 MB).
+- **Process Startup & Init Timing (`performance_footprint.json`):**
+  - `import docling`: **0.0402s**.
+  - `from docling.document_converter import DocumentConverter`: **6.8135s** (loads PyTorch, Transformers, ONNX dependencies).
+  - `DocumentConverter()` instantiation: **0.0953s**.
+  - Total cold process initialization: **6.9088s**.
+- **Execution Lifecycle & F01 Conversion Benchmarks (`performance_footprint.json` & `summary_all_both.json`):**
+  - **Cold Child Process (Fresh OS Subprocess):** **16.22s** total duration (`cold_child_process_duration_seconds: 16.2215`), with **1107.57 MB** process-tree peak RSS. Includes clean Python process startup, dependency imports, converter initialization, and first conversion.
+  - **In-Process First Conversion (Model Weights Load):** **12.41s** duration (`in_process_first_conversion_duration_seconds: 12.4060`), with **1099.75 MB** process peak RSS. Within an already-initialized process, the first conversion incurs one-time deep-learning weight loading into memory. In the 15-fixture evaluation suite run (`summary_all_both.json`), the initial conversion of `F01` took **10.60s** (peak RSS **1072.55 MB**).
+  - **In-Process Warm Conversion (Weights Resident):** **2.95s** duration (`in_process_warm_conversion_duration_seconds: 2.9465`), with **1084.87 MB** process peak RSS. Represents pure inference latency when converter instance and neural weights are already resident in RAM.
+- **Empirical Throughput & Latency by Document Type:**
+  - **Digital Single-Page PDFs (Warm Converter State):**
+    - Observed in full 15-fixture suite (`summary_all_both.json`): `F05` broken wrap: **2.42s** (0.41 pages/s); `F15` mixed unicode: **2.40s** (0.42 pages/s); `F07` cyrillic: **3.22s** (0.31 pages/s); `F12` nested lists: **3.28s** (0.30 pages/s); `F04` header/footer: **4.50s** (0.22 pages/s); `F02` multicolumn: **5.52s** (0.18 pages/s).
+    - Observed in 8-fixture gate suite (`summary_gate_both.json`): `F07` cyrillic: **2.07s** (0.48 pages/s); `F02` multicolumn: **3.06s** (0.33 pages/s).
+    - Dedicated warm single-page benchmark (`performance_footprint.json`): `F01` warm: **2.95s** (0.34 pages/s).
+    - **Throughput Range (Warm Digital PDFs):** **2.07s – 5.52s per page** (**0.18 – 0.48 pages/second**). Peak RSS ranges from **1084.87 MB to 1329.07 MB**.
+  - **Dense Table Structure Extraction (`F03`):**
+    - Deep-learning TableFormer inference on 4x4 tabular data: **9.73s** (`summary_all_both.json`) to **11.70s** (`summary_gate_both.json`) per page (**~0.08 – 0.10 pages/second**). Process-tree peak RSS reaches **1432.01 MB – 1508.92 MB**.
+  - **Degraded Scanned PDF with OCR (`F06`):**
+    - RapidOCR detection, angle classification, and character recognition on synthetic degraded raster: **9.29s** (`summary_gate_both.json`) to **9.94s** (`summary_all_both.json`) per page (**~0.10 – 0.11 pages/second**). Process-tree peak RSS reaches **1514.07 MB – 1620.31 MB** (the highest peak RSS in the evaluation suite).
+  - **Non-PDF Formats (`F08`–`F11`):**
+    - Converted via lightweight native parsers without heavy neural models:
+      - Structured DOCX (`F08`): **0.142s – 0.328s** (**~3.0 – 7.0 documents/second**).
+      - Slide Deck PPTX (`F09`): **0.039s – 0.058s** (**~17.2 – 25.6 presentations/second**).
+      - Multi-Sheet XLSX (`F10`): **0.014s** (**~71.9 workbooks/second**).
+      - Semantic HTML (`F11`): **0.039s** (**~25.6 documents/second**).
+- **Process Memory Sizing Recommendation:**
+  - Memory footprint remains around ~1.08–1.33 GB for digital PDFs, but peaks at **1508.9 MB** during TableFormer table parsing (`F03`) and **1620.3 MB** during RapidOCR raster inference (`F06`).
+  - Therefore, the background worker watchdog should configure an auto-restart ceiling of **1.75 GB – 2.0 GB** process-tree peak RSS to guarantee stability during prolonged batch operations.
+
 
 ---
 
@@ -283,8 +304,8 @@ To ensure production-grade consistency, privacy, and determinism across converte
 | Risk | Severity | Mitigation |
 |------|----------|------------|
 | Initial model download size (~566 MB) | High | Implement on-demand model download UI in Settings or provide an offline bundle installer. |
-| High RAM consumption during PDF DL parsing (~1.2 GB) | Medium | Process documents sequentially in worker; restart worker if memory exceeds 1.5 GB. |
-| Startup latency (~6s cold start) | Medium | Use a persistent long-running background worker during batch processing rather than spawning per file. |
+| High RAM consumption during PDF DL parsing (~1.6 GB peak on OCR) | Medium | Process documents sequentially in worker; restart worker if memory exceeds 1.75–2.0 GB. |
+| Startup latency (~6.9s cold initialization) | Medium | Use a persistent long-running background worker during batch processing rather than spawning per file. |
 | Flattened nested list indentation | Medium | Restore hierarchical indentation in Zlet Quality Layer post-processing. |
 | Non-developer Windows symlink warnings | Low | Set `HF_HUB_DISABLE_SYMLINKS_WARNING=1` in the worker launcher. |
 

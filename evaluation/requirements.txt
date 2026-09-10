@@ -1,4 +1,4 @@
-﻿# Primary evaluated dependencies for ZC-042
+# Primary evaluated dependencies for ZC-042
 # For exact 107-package transitive lockfile, see requirements-lock.txt
 docling==2.126.0
 docling-core==2.95.0
@@ -13,3 +13,4 @@ Pillow==12.3.0
 pypdf==6.18.0
 pip-licenses==5.5.5
 psutil==7.2.2
+numpy==2.4.6

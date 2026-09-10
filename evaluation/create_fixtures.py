@@ -1,7 +1,8 @@
-﻿import os
+import os
 import sys
 from pathlib import Path
 import random
+import datetime
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
 import fpdf
@@ -170,6 +171,19 @@ def create_f05_broken_wrap():
     pdf.output(str(out_path))
     print(f"Created {out_path}")
 
+# Ground truth text for F06 scanned OCR reference validation
+F06_TITLE = "OFFICIAL NOTICE: OCR CAPABILITY TEST"
+F06_BODY = (
+    "Document Identifier: SC-98421\n"
+    "Date of Certification: September 2026\n"
+    "Issuer: Zlet Systems Quality Assessment Group\n\n"
+    "This scanned image tests whether the OCR subsystem activates\n"
+    "accurately on non-searchable rasterized PDF pages with synthetic scan degradation.\n"
+    "All characters in this paragraph must be recognized without errors.\n"
+    "The quick brown fox jumps over the lazy dog.\n"
+    "Expected result: clean extracted markdown text with intact wording."
+)
+
 def create_f06_scanned():
     # Representative scanned-document fixture with realistic degradation
     w, h = 1600, 1200
@@ -183,24 +197,16 @@ def create_f06_scanned():
     
     # 2. Dark gray scanner ink
     ink_color = (35, 35, 35)
-    draw.text((120, 110), "OFFICIAL NOTICE: OCR CAPABILITY TEST", fill=ink_color, font=font_title)
+    draw.text((120, 110), F06_TITLE, fill=ink_color, font=font_title)
     draw.line([(120, 170), (1480, 170)], fill=ink_color, width=3)
     
-    body_text = (
-        "Document Identifier: SC-98421\n"
-        "Date of Certification: September 2026\n"
-        "Issuer: Zlet Systems Quality Assessment Group\n\n"
-        "This scanned image tests whether the OCR subsystem activates\n"
-        "accurately on non-searchable rasterized PDF pages with synthetic scan degradation.\n"
-        "All characters in this paragraph must be recognized without errors.\n"
-        "The quick brown fox jumps over the lazy dog.\n"
-        "Expected result: clean extracted markdown text with intact wording."
-    )
-    draw.text((120, 210), body_text, fill=ink_color, font=font_body, spacing=14)
+    draw.text((120, 210), F06_BODY, fill=ink_color, font=font_body, spacing=14)
     
-    # 3. Add scanner noise
+    # 3. Add scanner noise using deterministic seeded generator
+    # Fixed seed 42 guarantees byte-reproducible synthetic scanner noise
+    rng = np.random.default_rng(42)
     img_arr = np.array(img, dtype=np.int16)
-    noise = np.random.normal(0, 3.5, img_arr.shape).astype(np.int16)
+    noise = rng.normal(0, 3.5, img_arr.shape).astype(np.int16)
     noisy_arr = np.clip(img_arr + noise, 0, 255).astype(np.uint8)
     img = Image.fromarray(noisy_arr)
     
@@ -215,13 +221,15 @@ def create_f06_scanned():
     
     # Embed into image-only PDF
     pdf = fpdf.FPDF(orientation="P", unit="mm", format="A4")
+    # Fixed creation date ensures byte-reproducible PDF metadata across regeneration passes
+    pdf.set_creation_date(datetime.datetime(2026, 9, 10, 0, 0, 0, tzinfo=datetime.timezone.utc))
     pdf.add_page()
     pdf.image(str(img_tmp_path), x=10, y=10, w=190)
     out_path = FIXTURES_DIR / "F06_scanned.pdf"
     pdf.output(str(out_path))
     if img_tmp_path.exists():
         img_tmp_path.unlink()
-    print(f"Created {out_path} (with synthetic scan degradation: noise, blur, and skew)")
+    print(f"Created {out_path} (with synthetic scan degradation: noise, blur, and skew; RNG seed=42)")
 
 def create_f07_cyrillic():
     pdf = fpdf.FPDF()
