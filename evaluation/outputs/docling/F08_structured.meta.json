@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F08_structured.docx",
-  "duration_seconds": 0.1631,
-  "start_rss_mb": 1258.81,
-  "peak_rss_mb": 1260.0,
+  "duration_seconds": 0.4274,
+  "start_rss_mb": 1096.88,
+  "post_rss_mb": 1098.13,
+  "peak_rss_mb": 1098.13,
   "success": true,
   "error": null,
   "char_count": 852,

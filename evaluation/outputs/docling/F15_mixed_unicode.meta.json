@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F15_mixed_unicode.pdf",
-  "duration_seconds": 2.3639,
-  "start_rss_mb": 1282.84,
-  "peak_rss_mb": 1258.83,
+  "duration_seconds": 3.8821,
+  "start_rss_mb": 1179.32,
+  "post_rss_mb": 1186.1,
+  "peak_rss_mb": 1245.51,
   "success": true,
   "error": null,
   "char_count": 347,

@@ -1,8 +1,10 @@
-﻿import sys
+import sys
 import os
 import time
 import json
 import argparse
+import threading
+import hashlib
 import psutil
 from pathlib import Path
 
@@ -47,9 +49,58 @@ ALL_FIXTURES = [
 EXPECTED_TO_FAIL = ["F14_corrupted.pdf"]
 EXPECTED_EMPTY = ["F13_empty.pdf"]
 
-def get_process_memory_mb():
-    process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)
+class ProcessTreeMemoryMonitor:
+    """
+    Monitors RSS memory of current process and all child processes concurrently
+    during conversion execution to capture true peak RSS footprint.
+    """
+    def __init__(self, interval_sec=0.01):
+        self.interval = interval_sec
+        self.proc = psutil.Process(os.getpid())
+        self.start_rss = 0
+        self.peak_rss = 0
+        self.post_rss = 0
+        self.stop_event = threading.Event()
+        self.thread = None
+
+    def _sample(self):
+        try:
+            total = self.proc.memory_info().rss
+            for child in self.proc.children(recursive=True):
+                try:
+                    total += child.memory_info().rss
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            return total
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return 0
+
+    def _run(self):
+        while not self.stop_event.is_set():
+            val = self._sample()
+            if val > self.peak_rss:
+                self.peak_rss = val
+            self.stop_event.wait(self.interval)
+
+    def start(self):
+        self.start_rss = self._sample()
+        self.peak_rss = self.start_rss
+        self.stop_event.clear()
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        self.stop_event.set()
+        if self.thread:
+            self.thread.join(timeout=1.0)
+        self.post_rss = self._sample()
+        if self.post_rss > self.peak_rss:
+            self.peak_rss = self.post_rss
+        return {
+            "start_rss_mb": round(self.start_rss / (1024 * 1024), 2),
+            "post_rss_mb": round(self.post_rss / (1024 * 1024), 2),
+            "peak_rss_mb": round(self.peak_rss / (1024 * 1024), 2),
+        }
 
 def check_provenance_bboxes(texts):
     """
@@ -75,8 +126,9 @@ def check_provenance_bboxes(texts):
 
 def run_baseline_fixture(fixture_path):
     ext = fixture_path.suffix.lower()
+    mem_monitor = ProcessTreeMemoryMonitor(interval_sec=0.01)
+    mem_monitor.start()
     start_time = time.perf_counter()
-    start_rss = get_process_memory_mb()
     md_content = ""
     error = None
     
@@ -118,7 +170,8 @@ def run_baseline_fixture(fixture_path):
                     row_str = " | ".join([str(c) if c is not None else "" for c in row])
                     if row_str.strip():
                         rows.append(row_str)
-                sheet_blocks.append(f"### Sheet: {name}\n" + "\n".join(rows))
+                if rows:
+                    sheet_blocks.append(f"### Sheet: {name}\n" + "\n".join(rows))
             md_content = "\n\n".join(sheet_blocks)
         elif ext == ".html":
             from bs4 import BeautifulSoup
@@ -131,14 +184,15 @@ def run_baseline_fixture(fixture_path):
         error = f"{type(ex).__name__}: {str(ex)}"
         
     duration = time.perf_counter() - start_time
-    peak_rss = get_process_memory_mb()
+    mem_stats = mem_monitor.stop()
     
     meta = {
         "arm": "baseline",
         "fixture": fixture_path.name,
         "duration_seconds": round(duration, 4),
-        "start_rss_mb": round(start_rss, 2),
-        "peak_rss_mb": round(peak_rss, 2),
+        "start_rss_mb": mem_stats["start_rss_mb"],
+        "post_rss_mb": mem_stats["post_rss_mb"],
+        "peak_rss_mb": mem_stats["peak_rss_mb"],
         "success": error is None,
         "error": error,
         "char_count": len(md_content),
@@ -147,8 +201,9 @@ def run_baseline_fixture(fixture_path):
     return md_content, meta
 
 def run_docling_fixture(converter, fixture_path):
+    mem_monitor = ProcessTreeMemoryMonitor(interval_sec=0.01)
+    mem_monitor.start()
     start_time = time.perf_counter()
-    start_rss = get_process_memory_mb()
     md_content = ""
     error = None
     provenance_info = {}
@@ -177,14 +232,15 @@ def run_docling_fixture(converter, fixture_path):
         error = f"{type(ex).__name__}: {str(ex)}"
         
     duration = time.perf_counter() - start_time
-    peak_rss = get_process_memory_mb()
+    mem_stats = mem_monitor.stop()
     
     meta = {
         "arm": "docling",
         "fixture": fixture_path.name,
         "duration_seconds": round(duration, 4),
-        "start_rss_mb": round(start_rss, 2),
-        "peak_rss_mb": round(peak_rss, 2),
+        "start_rss_mb": mem_stats["start_rss_mb"],
+        "post_rss_mb": mem_stats["post_rss_mb"],
+        "peak_rss_mb": mem_stats["peak_rss_mb"],
         "success": error is None,
         "error": error,
         "char_count": len(md_content),
@@ -264,20 +320,45 @@ def run_suite(fixture_names, arm="both", determinism_check=True):
             summary.append(meta_base)
 
     # Determinism test
+    determinism_results = []
     determinism_failures = []
     if determinism_check and arm in ("docling", "both"):
-        print("\n--- Running Determinism Verification (F01 & F03) ---")
-        for d_fname in ["F01_simple_text.pdf", "F03_table.pdf"]:
+        print("\n--- Running Comprehensive Determinism Verification ---")
+        det_fixtures = [f for f in fixture_names if f not in EXPECTED_TO_FAIL]
+        for d_fname in det_fixtures:
             df_path = FIXTURES_DIR / d_fname
             if not df_path.exists():
                 continue
             base_id = d_fname.split(".")[0]
-            first_run_md = (OUTPUTS_DIR / "docling" / f"{base_id}.md").read_text(encoding="utf-8")
+            md_file = OUTPUTS_DIR / "docling" / f"{base_id}.md"
+            if not md_file.exists():
+                continue
+            first_run_md = md_file.read_text(encoding="utf-8")
             second_md, _ = run_docling_fixture(converter, df_path)
-            is_identical = (first_run_md == second_md)
-            print(f"  {d_fname} run1 == run2: {is_identical} (bytes: {len(first_run_md.encode('utf-8'))} vs {len(second_md.encode('utf-8'))})")
+            
+            h1 = hashlib.sha256(first_run_md.encode("utf-8")).hexdigest()
+            h2 = hashlib.sha256(second_md.encode("utf-8")).hexdigest()
+            is_identical = (h1 == h2)
+            
+            det_record = {
+                "fixture": d_fname,
+                "is_identical": is_identical,
+                "bytes": len(first_run_md.encode("utf-8")),
+                "run1_sha256": h1,
+                "run2_sha256": h2
+            }
+            determinism_results.append(det_record)
+            status_tag = "MATCH" if is_identical else "MISMATCH"
+            print(f"  [{status_tag}] {d_fname:<25} sha256:{h1[:12]}... (bytes: {det_record['bytes']})")
             if not is_identical:
                 determinism_failures.append(d_fname)
+                
+        suite_type = 'gate' if len(fixture_names) == 8 else 'all' if len(fixture_names) == 15 else 'custom'
+        det_path = OUTPUTS_DIR / f"determinism_{suite_type}.json"
+        det_path.write_text(json.dumps(determinism_results, indent=2), encoding="utf-8")
+        # Also maintain a master determinism_summary.json
+        (OUTPUTS_DIR / "determinism_summary.json").write_text(json.dumps(determinism_results, indent=2), encoding="utf-8")
+        print(f"Determinism verification evidence written to {det_path}")
 
     # Save summary
     suite_type = 'gate' if len(fixture_names) == 8 else 'all' if len(fixture_names) == 15 else 'custom'

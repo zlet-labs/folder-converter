@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F03_table.pdf",
-  "duration_seconds": 9.8253,
-  "start_rss_mb": 1140.15,
-  "peak_rss_mb": 1110.23,
+  "duration_seconds": 19.2696,
+  "start_rss_mb": 971.81,
+  "post_rss_mb": 1004.25,
+  "peak_rss_mb": 1429.59,
   "success": true,
   "error": null,
   "char_count": 445,

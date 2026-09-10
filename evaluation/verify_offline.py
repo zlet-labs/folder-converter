@@ -1,29 +1,58 @@
-﻿import sys
+import sys
 import os
 import socket
 import time
 from pathlib import Path
 
-# Track any outgoing socket connections
-original_socket_connect = socket.socket.connect
+# Track any outgoing socket connections or DNS resolution attempts
 connections_attempted = []
 
-def monitored_connect(self, address):
-    connections_attempted.append(address)
-    # Block network immediately
-    raise OSError(f"Network blocked by offline verification test (attempted connect to {address})")
+def record_and_block(op_name, target):
+    entry = f"{op_name}({target})"
+    connections_attempted.append(entry)
+    raise OSError(f"Network blocked by offline verification test: {entry}")
 
+original_connect = socket.socket.connect
+def monitored_connect(self, address):
+    record_and_block("socket.connect", address)
 socket.socket.connect = monitored_connect
+
+original_connect_ex = socket.socket.connect_ex
+def monitored_connect_ex(self, address):
+    record_and_block("socket.connect_ex", address)
+socket.socket.connect_ex = monitored_connect_ex
+
+original_sendto = socket.socket.sendto
+def monitored_sendto(self, *args, **kwargs):
+    target = args[1] if len(args) > 1 else kwargs.get("address", "unknown")
+    record_and_block("socket.sendto", target)
+socket.socket.sendto = monitored_sendto
+
+original_getaddrinfo = socket.getaddrinfo
+def monitored_getaddrinfo(host, port, *args, **kwargs):
+    record_and_block("socket.getaddrinfo", f"{host}:{port}")
+socket.getaddrinfo = monitored_getaddrinfo
+
+original_gethostbyname = socket.gethostbyname
+def monitored_gethostbyname(hostname):
+    record_and_block("socket.gethostbyname", hostname)
+socket.gethostbyname = monitored_gethostbyname
+
+original_create_connection = socket.create_connection
+def monitored_create_connection(address, *args, **kwargs):
+    record_and_block("socket.create_connection", address)
+socket.create_connection = monitored_create_connection
 
 # Set environment variables for offline mode
 os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HTTP_PROXY"] = "http://0.0.0.0:1"
 os.environ["HTTPS_PROXY"] = "http://0.0.0.0:1"
+os.environ["NO_PROXY"] = ""
 
 print("--- Starting Offline Mode Verification ---")
 print(f"HF_HUB_OFFLINE: {os.environ.get('HF_HUB_OFFLINE')}")
-print(f"Socket monitoring: ACTIVE (all outgoing network calls blocked)")
+print("Socket/DNS monitoring: ACTIVE (connect, connect_ex, sendto, getaddrinfo blocked)")
 
 fixtures_to_test = [
     Path("evaluation/fixtures/F01_simple_text.pdf"),

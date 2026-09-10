@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F02_multicolumn.pdf",
-  "duration_seconds": 5.2155,
-  "start_rss_mb": 1040.71,
-  "peak_rss_mb": 1140.32,
+  "duration_seconds": 4.2078,
+  "start_rss_mb": 1026.97,
+  "post_rss_mb": 972.0,
+  "peak_rss_mb": 1089.6,
   "success": true,
   "error": null,
   "char_count": 929,

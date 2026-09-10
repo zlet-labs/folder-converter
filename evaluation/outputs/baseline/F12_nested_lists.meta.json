@@ -1,9 +1,10 @@
 {
   "arm": "baseline",
   "fixture": "F12_nested_lists.pdf",
-  "duration_seconds": 0.0055,
-  "start_rss_mb": 1281.76,
-  "peak_rss_mb": 1281.76,
+  "duration_seconds": 0.0045,
+  "start_rss_mb": 1157.75,
+  "post_rss_mb": 1157.77,
+  "peak_rss_mb": 1157.77,
   "success": true,
   "error": null,
   "char_count": 515,

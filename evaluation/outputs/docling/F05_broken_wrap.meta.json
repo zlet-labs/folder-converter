@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F05_broken_wrap.pdf",
-  "duration_seconds": 2.0841,
-  "start_rss_mb": 1208.07,
-  "peak_rss_mb": 1216.05,
+  "duration_seconds": 3.9804,
+  "start_rss_mb": 1078.57,
+  "post_rss_mb": 1090.38,
+  "peak_rss_mb": 1168.75,
   "success": true,
   "error": null,
   "char_count": 376,

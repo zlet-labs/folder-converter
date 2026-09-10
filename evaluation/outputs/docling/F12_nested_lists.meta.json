@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F12_nested_lists.pdf",
-  "duration_seconds": 2.0603,
-  "start_rss_mb": 1266.22,
-  "peak_rss_mb": 1281.93,
+  "duration_seconds": 4.0826,
+  "start_rss_mb": 1104.56,
+  "post_rss_mb": 1157.94,
+  "peak_rss_mb": 1234.18,
   "success": true,
   "error": null,
   "char_count": 491,

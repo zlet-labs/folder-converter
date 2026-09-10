@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F13_empty.pdf",
-  "duration_seconds": 2.0175,
-  "start_rss_mb": 1281.76,
-  "peak_rss_mb": 1282.8,
+  "duration_seconds": 3.7621,
+  "start_rss_mb": 1157.75,
+  "post_rss_mb": 1179.29,
+  "peak_rss_mb": 1237.32,
   "success": true,
   "error": null,
   "char_count": 0,

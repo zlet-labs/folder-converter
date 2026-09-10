@@ -1,9 +1,10 @@
 {
   "arm": "baseline",
   "fixture": "F08_structured.docx",
-  "duration_seconds": 0.0151,
-  "start_rss_mb": 1260.0,
-  "peak_rss_mb": 1264.78,
+  "duration_seconds": 0.0375,
+  "start_rss_mb": 1098.11,
+  "post_rss_mb": 1103.52,
+  "peak_rss_mb": 1103.52,
   "success": true,
   "error": null,
   "char_count": 585,

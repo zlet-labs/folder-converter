@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F07_cyrillic.pdf",
-  "duration_seconds": 2.2761,
-  "start_rss_mb": 1293.87,
-  "peak_rss_mb": 1258.81,
+  "duration_seconds": 4.4309,
+  "start_rss_mb": 1207.06,
+  "post_rss_mb": 1096.89,
+  "peak_rss_mb": 1228.33,
   "success": true,
   "error": null,
   "char_count": 553,

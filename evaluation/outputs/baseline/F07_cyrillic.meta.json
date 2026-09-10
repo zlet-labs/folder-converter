@@ -1,9 +1,10 @@
 {
   "arm": "baseline",
   "fixture": "F07_cyrillic.pdf",
-  "duration_seconds": 0.0125,
-  "start_rss_mb": 1258.81,
-  "peak_rss_mb": 1258.81,
+  "duration_seconds": 0.0154,
+  "start_rss_mb": 1096.88,
+  "post_rss_mb": 1096.89,
+  "peak_rss_mb": 1096.89,
   "success": true,
   "error": null,
   "char_count": 544,

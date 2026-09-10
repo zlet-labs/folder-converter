@@ -1,9 +1,10 @@
 {
   "arm": "baseline",
   "fixture": "F03_table.pdf",
-  "duration_seconds": 0.0065,
-  "start_rss_mb": 1110.05,
-  "peak_rss_mb": 1110.05,
+  "duration_seconds": 0.0055,
+  "start_rss_mb": 1004.05,
+  "post_rss_mb": 1004.07,
+  "peak_rss_mb": 1004.07,
   "success": true,
   "error": null,
   "char_count": 247,

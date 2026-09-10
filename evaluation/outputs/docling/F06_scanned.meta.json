@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F06_scanned.pdf",
-  "duration_seconds": 8.1464,
-  "start_rss_mb": 1215.89,
-  "peak_rss_mb": 1287.81,
+  "duration_seconds": 14.4035,
+  "start_rss_mb": 1090.21,
+  "post_rss_mb": 1201.02,
+  "peak_rss_mb": 1536.08,
   "success": true,
   "error": null,
   "char_count": 482,

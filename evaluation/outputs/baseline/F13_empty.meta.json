@@ -1,9 +1,10 @@
 {
   "arm": "baseline",
   "fixture": "F13_empty.pdf",
-  "duration_seconds": 0.0022,
-  "start_rss_mb": 1282.8,
-  "peak_rss_mb": 1282.8,
+  "duration_seconds": 0.0015,
+  "start_rss_mb": 1179.28,
+  "post_rss_mb": 1179.3,
+  "peak_rss_mb": 1179.3,
   "success": true,
   "error": null,
   "char_count": 0,

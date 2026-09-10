@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F11_structural.html",
-  "duration_seconds": 0.0361,
-  "start_rss_mb": 1266.16,
-  "peak_rss_mb": 1266.21,
+  "duration_seconds": 0.0422,
+  "start_rss_mb": 1104.5,
+  "post_rss_mb": 1104.58,
+  "peak_rss_mb": 1104.58,
   "success": true,
   "error": null,
   "char_count": 606,

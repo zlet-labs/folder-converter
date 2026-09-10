@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F14_corrupted.pdf",
-  "duration_seconds": 0.4322,
-  "start_rss_mb": 1282.8,
-  "peak_rss_mb": 1282.84,
+  "duration_seconds": 0.4032,
+  "start_rss_mb": 1179.28,
+  "post_rss_mb": 1179.34,
+  "peak_rss_mb": 1179.34,
   "success": false,
   "error": "ConversionError: Conversion failed for: F14_corrupted.pdf with status: failure. Errors: docling-parse could not load document b711842a317bb21318dc773461b3ecbf5c572bb6f89212493e2d6758de83d26d: Failed to load document with key key=b711842a317bb21318dc773461b3ecbf5c572bb6f89212493e2d6758de83d26d",
   "char_count": 0,

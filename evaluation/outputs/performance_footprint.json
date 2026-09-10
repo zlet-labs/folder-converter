@@ -1,0 +1,20 @@
+{
+  "storage": {
+    "venv_size_mb": 1171.34,
+    "huggingface_cache_mb": 505.45,
+    "rapidocr_models_mb": 61.02,
+    "total_models_mb": 566.47
+  },
+  "startup_timings_seconds": {
+    "import_docling": 0.0474,
+    "import_document_converter": 6.4164,
+    "document_converter_init": 0.0889,
+    "total_cold_init": 6.5053
+  },
+  "cold_vs_warm_f01": {
+    "cold_duration_seconds": 18.3546,
+    "cold_peak_tree_rss_mb": 1088.62,
+    "warm_duration_seconds": 12.4993,
+    "warm_peak_tree_rss_mb": 1061.11
+  }
+}

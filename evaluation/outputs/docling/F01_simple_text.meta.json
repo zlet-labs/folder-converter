@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F01_simple_text.pdf",
-  "duration_seconds": 8.4242,
-  "start_rss_mb": 332.54,
-  "peak_rss_mb": 1037.21,
+  "duration_seconds": 27.3782,
+  "start_rss_mb": 332.62,
+  "post_rss_mb": 1023.56,
+  "peak_rss_mb": 1092.57,
   "success": true,
   "error": null,
   "char_count": 874,

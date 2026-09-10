@@ -1,9 +1,10 @@
 {
   "arm": "docling",
   "fixture": "F09_slides.pptx",
-  "duration_seconds": 0.0503,
-  "start_rss_mb": 1264.78,
-  "peak_rss_mb": 1265.78,
+  "duration_seconds": 0.141,
+  "start_rss_mb": 1103.51,
+  "post_rss_mb": 1104.22,
+  "peak_rss_mb": 1104.22,
   "success": true,
   "error": null,
   "char_count": 481,
