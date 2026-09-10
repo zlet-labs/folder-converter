@@ -1,9 +1,9 @@
 {
   "arm": "docling",
   "fixture": "F07_cyrillic.pdf",
-  "duration_seconds": 2.3574,
-  "start_rss_mb": 1175.86,
-  "peak_rss_mb": 1140.83,
+  "duration_seconds": 2.2761,
+  "start_rss_mb": 1293.87,
+  "peak_rss_mb": 1258.81,
   "success": true,
   "error": null,
   "char_count": 553,
@@ -14,6 +14,7 @@
     "num_tables": 0,
     "num_pictures": 0,
     "has_provenance_bboxes": true,
+    "valid_bbox_count": 4,
     "keys": [
       "schema_name",
       "version",

@@ -14,14 +14,27 @@ def get_dir_size_mb(path):
     total = sum(f.stat().st_size for f in p.rglob('*') if f.is_file())
     return round(total / (1024 * 1024), 2)
 
+# Dynamically resolve HF cache directory
+hf_cache_dir = None
+if os.environ.get("HF_HOME"):
+    hf_cache_dir = Path(os.environ["HF_HOME"]) / "hub"
+elif os.environ.get("HF_HUB_CACHE"):
+    hf_cache_dir = Path(os.environ["HF_HUB_CACHE"])
+else:
+    try:
+        from huggingface_hub.constants import HF_HUB_CACHE
+        hf_cache_dir = Path(HF_HUB_CACHE)
+    except Exception:
+        hf_cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
+
 # Measure sizes
 venv_size = get_dir_size_mb("evaluation/venv")
-hf_cache = get_dir_size_mb("C:/Users/IQPulse/.cache/huggingface/hub")
+hf_cache = get_dir_size_mb(hf_cache_dir)
 rapidocr_models = get_dir_size_mb("evaluation/venv/Lib/site-packages/rapidocr/models")
 
 print(f"=== Storage Footprint ===")
 print(f"Virtual Environment Size: {venv_size} MB")
-print(f"HuggingFace Models Cache: {hf_cache} MB")
+print(f"HuggingFace Models Cache: {hf_cache} MB (path: {hf_cache_dir})")
 print(f"RapidOCR Models Size:     {rapidocr_models} MB")
 print(f"Total Models Storage:     {round(hf_cache + rapidocr_models, 2)} MB")
 

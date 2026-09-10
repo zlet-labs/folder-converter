@@ -1,9 +1,15 @@
-docling
-fpdf2
-python-docx
-python-pptx
-openpyxl
-Pillow
-pypdf
-pip-licenses
-psutil
+﻿# Primary evaluated dependencies for ZC-042
+# For exact 107-package transitive lockfile, see requirements-lock.txt
+docling==2.126.0
+docling-core==2.95.0
+docling-parse==7.18.0
+rapidocr==3.9.2
+torch==2.14.0
+fpdf2==2.8.8
+python-docx==1.2.0
+python-pptx==1.0.2
+openpyxl==3.1.5
+Pillow==12.3.0
+pypdf==6.18.0
+pip-licenses==5.5.5
+psutil==7.2.2

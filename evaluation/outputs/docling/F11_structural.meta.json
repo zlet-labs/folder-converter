@@ -1,9 +1,9 @@
 {
   "arm": "docling",
   "fixture": "F11_structural.html",
-  "duration_seconds": 0.0302,
-  "start_rss_mb": 1148.03,
-  "peak_rss_mb": 1148.11,
+  "duration_seconds": 0.0361,
+  "start_rss_mb": 1266.16,
+  "peak_rss_mb": 1266.21,
   "success": true,
   "error": null,
   "char_count": 606,
@@ -13,7 +13,8 @@
     "num_texts": 11,
     "num_tables": 1,
     "num_pictures": 0,
-    "has_provenance_bboxes": true,
+    "has_provenance_bboxes": false,
+    "valid_bbox_count": 0,
     "keys": [
       "schema_name",
       "version",

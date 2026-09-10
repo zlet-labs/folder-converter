@@ -1,11 +1,14 @@
 ﻿import os
 import sys
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+import random
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import numpy as np
 import fpdf
 from docx import Document as DocxDocument
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+import docx.opc.constants
 import pptx
 from pptx.util import Inches, Pt
 import openpyxl
@@ -47,38 +50,43 @@ def create_f02_multicolumn():
     pdf.cell(0, 10, "Comparative Multi-Column Layout Analysis", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
     
-    # Left column: x=10, width=90
-    # Right column: x=110, width=90
     col_w = 90
     left_x = 10
     right_x = 110
     top_y = pdf.get_y()
     
-    # Write left column
+    # Challenge stream order: physically interleave drawing operations between columns
+    # 1. Left Heading
     pdf.set_xy(left_x, top_y)
     pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(col_w, 7, "Section A: Primary Findings", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_x(left_x)
+    pdf.cell(col_w, 7, "Section A: Primary Findings", new_x="RIGHT", new_y="TOP")
+    
+    # 2. Right Heading (drawn immediately after left heading in stream)
+    pdf.set_xy(right_x, top_y)
+    pdf.cell(col_w, 7, "Section B: Secondary Observations", new_x="RIGHT", new_y="TOP")
+    
+    # 3. Left Column Paragraph 1
+    pdf.set_xy(left_x, top_y + 10)
     pdf.set_font("Helvetica", "", 10)
     pdf.multi_cell(col_w, 6, "Left Column Paragraph 1: Academic and periodical publishing frequently employs multi-column grids to optimize line length for human readability. A naive sequential reading order parser will traverse across columns, interweaving disparate thoughts.")
-    pdf.ln(3)
-    pdf.set_x(left_x)
-    pdf.multi_cell(col_w, 6, "Left Column Paragraph 2: High-fidelity layout models identify physical column boundaries and order document elements down each column in sequence before advancing to the subsequent column.")
-
-    # Write right column
-    pdf.set_xy(right_x, top_y)
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(col_w, 7, "Section B: Secondary Observations", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_x(right_x)
-    pdf.set_font("Helvetica", "", 10)
+    left_p1_end_y = pdf.get_y()
+    
+    # 4. Right Column Paragraph 1 (drawn immediately after left paragraph 1 in stream)
+    pdf.set_xy(right_x, top_y + 10)
     pdf.multi_cell(col_w, 6, "Right Column Paragraph 1: Reading order verification is essential when validating scientific papers. Textual continuity must be strictly preserved across column breaks.")
-    pdf.ln(3)
-    pdf.set_x(right_x)
+    right_p1_end_y = pdf.get_y()
+    
+    # 5. Left Column Paragraph 2
+    pdf.set_xy(left_x, left_p1_end_y + 3)
+    pdf.multi_cell(col_w, 6, "Left Column Paragraph 2: High-fidelity layout models identify physical column boundaries and order document elements down each column in sequence before advancing to the subsequent column.")
+    
+    # 6. Right Column Paragraph 2
+    pdf.set_xy(right_x, right_p1_end_y + 3)
     pdf.multi_cell(col_w, 6, "Right Column Paragraph 2: If this paragraph appears in markdown immediately following Right Column Paragraph 1, the column layout analyzer is performing correctly.")
     
     out_path = FIXTURES_DIR / "F02_multicolumn.pdf"
     pdf.output(str(out_path))
-    print(f"Created {out_path}")
+    print(f"Created {out_path} (with interleaved stream order to challenge 2D layout reading order)")
 
 def create_f03_table():
     pdf = fpdf.FPDF()
@@ -147,7 +155,6 @@ def create_f05_broken_wrap():
     pdf.ln(5)
     pdf.set_font("Helvetica", "", 11)
     
-    # Hardcoded short lines with broken hyphens
     lines = [
         "Software engineering methodologies frequently encoun-",
         "ter challenges when reconciling complex architectural con-",
@@ -164,29 +171,44 @@ def create_f05_broken_wrap():
     print(f"Created {out_path}")
 
 def create_f06_scanned():
-    # Generate an image using Pillow
-    img = Image.new("RGB", (1600, 1200), color=(255, 255, 255))
+    # Representative scanned-document fixture with realistic degradation
+    w, h = 1600, 1200
+    # 1. Warm off-white background simulating physical scanner paper
+    img = Image.new("RGB", (w, h), color=(247, 245, 240))
     draw = ImageDraw.Draw(img)
     
-    # Try system font or default font
     font_path = get_font_path("arial.ttf")
-    font_title = ImageFont.truetype(font_path, 48) if font_path else ImageFont.load_default()
-    font_body = ImageFont.truetype(font_path, 32) if font_path else ImageFont.load_default()
+    font_title = ImageFont.truetype(font_path, 44) if font_path else ImageFont.load_default()
+    font_body = ImageFont.truetype(font_path, 30) if font_path else ImageFont.load_default()
     
-    draw.text((100, 100), "OFFICIAL NOTICE: OCR CAPABILITY TEST", fill=(0, 0, 0), font=font_title)
-    draw.line([(100, 160), (1500, 160)], fill=(0, 0, 0), width=4)
+    # 2. Dark gray scanner ink
+    ink_color = (35, 35, 35)
+    draw.text((120, 110), "OFFICIAL NOTICE: OCR CAPABILITY TEST", fill=ink_color, font=font_title)
+    draw.line([(120, 170), (1480, 170)], fill=ink_color, width=3)
     
     body_text = (
         "Document Identifier: SC-98421\n"
         "Date of Certification: September 2026\n"
         "Issuer: Zlet Systems Quality Assessment Group\n\n"
         "This scanned image tests whether the OCR subsystem activates\n"
-        "accurately on non-searchable rasterized PDF pages.\n"
+        "accurately on non-searchable rasterized PDF pages with synthetic scan degradation.\n"
         "All characters in this paragraph must be recognized without errors.\n"
         "The quick brown fox jumps over the lazy dog.\n"
         "Expected result: clean extracted markdown text with intact wording."
     )
-    draw.text((100, 200), body_text, fill=(20, 20, 20), font=font_body, spacing=14)
+    draw.text((120, 210), body_text, fill=ink_color, font=font_body, spacing=14)
+    
+    # 3. Add scanner noise
+    img_arr = np.array(img, dtype=np.int16)
+    noise = np.random.normal(0, 3.5, img_arr.shape).astype(np.int16)
+    noisy_arr = np.clip(img_arr + noise, 0, 255).astype(np.uint8)
+    img = Image.fromarray(noisy_arr)
+    
+    # 4. Add subtle optical blur
+    img = img.filter(ImageFilter.GaussianBlur(radius=0.5))
+    
+    # 5. Add rotational scanner skew (-0.75 degrees)
+    img = img.rotate(-0.75, resample=Image.Resampling.BICUBIC, expand=False, fillcolor=(247, 245, 240))
     
     img_tmp_path = FIXTURES_DIR / "f06_temp.png"
     img.save(str(img_tmp_path), "PNG")
@@ -199,7 +221,7 @@ def create_f06_scanned():
     pdf.output(str(out_path))
     if img_tmp_path.exists():
         img_tmp_path.unlink()
-    print(f"Created {out_path}")
+    print(f"Created {out_path} (with synthetic scan degradation: noise, blur, and skew)")
 
 def create_f07_cyrillic():
     pdf = fpdf.FPDF()
@@ -237,6 +259,28 @@ def create_f07_cyrillic():
     out_path = FIXTURES_DIR / "F07_cyrillic.pdf"
     pdf.output(str(out_path))
     print(f"Created {out_path}")
+
+def add_docx_hyperlink(paragraph, url, text, color="0000FF", underline=True):
+    part = paragraph.part
+    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+    if color:
+        c = OxmlElement('w:color')
+        c.set(qn('w:val'), color)
+        rPr.append(c)
+    if underline:
+        u = OxmlElement('w:u')
+        u.set(qn('w:val'), 'single')
+        rPr.append(u)
+    new_run.append(rPr)
+    text_elem = OxmlElement('w:t')
+    text_elem.text = text
+    new_run.append(text_elem)
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
 
 def create_f08_structured_docx():
     doc = DocxDocument()
@@ -281,23 +325,24 @@ def create_f08_structured_docx():
     r2[1].text = "Evaluation"
     r2[2].text = "Under Spike"
     
+    # Add real w:hyperlink element with distinct anchor text
     doc.add_paragraph()
-    p_link = doc.add_paragraph("Repository link: https://github.com/zlet-labs/zlet-converter")
+    p_link = doc.add_paragraph("For complete source code and updates, visit the ")
+    add_docx_hyperlink(p_link, "https://github.com/zlet-labs/zlet-converter", "Zlet Converter GitHub Repository")
+    p_link.add_run(".")
     
     out_path = FIXTURES_DIR / "F08_structured.docx"
     doc.save(str(out_path))
-    print(f"Created {out_path}")
+    print(f"Created {out_path} (with native w:hyperlink XML element and distinct anchor text)")
 
 def create_f09_slides():
     prs = pptx.Presentation()
     
-    # Slide 1: Title
     slide_layout = prs.slide_layouts[0]
     slide1 = prs.slides.add_slide(slide_layout)
     slide1.shapes.title.text = "Zlet Converter Strategy"
     slide1.placeholders[1].text = "Docling Markdown Conversion Spike (ZC-042)"
     
-    # Slide 2: Bullets
     slide_layout = prs.slide_layouts[1]
     slide2 = prs.slides.add_slide(slide_layout)
     slide2.shapes.title.text = "Key Evaluation Criteria"
@@ -308,8 +353,7 @@ def create_f09_slides():
     p = tf.add_paragraph()
     p.text = "Precise table and list syntax preservation"
     
-    # Slide 3: Table
-    slide_layout = prs.slide_layouts[5] # Title only
+    slide_layout = prs.slide_layouts[5]
     slide3 = prs.slides.add_slide(slide_layout)
     slide3.shapes.title.text = "Architecture Milestone Summary"
     
@@ -436,8 +480,18 @@ def create_f15_mixed_unicode():
     pdf = fpdf.FPDF()
     pdf.add_page()
     arial_path = get_font_path("arial.ttf")
-    simsun_path = get_font_path("simsun.ttc") or get_font_path("msyh.ttc")
     
+    cjk_fonts = ["simsun.ttc", "msyh.ttc", "yugothm.ttc", "meiryo.ttc", "msgothic.ttc"]
+    cjk_path = None
+    for f in cjk_fonts:
+        p = get_font_path(f)
+        if p:
+            cjk_path = p
+            break
+            
+    if not cjk_path:
+        raise RuntimeError("No CJK TrueType font found on system (checked simsun.ttc, msyh.ttc, etc.). CJK font is strictly required for F15.")
+        
     pdf.add_font("ArialUni", "", arial_path)
     pdf.add_font("ArialUni", "B", get_font_path("arialbd.ttf") or arial_path)
     
@@ -457,11 +511,11 @@ def create_f15_mixed_unicode():
     pdf.multi_cell(0, 6, "Тестирование кириллического алфавита: Привет мир, алгоритмы обработки данных, надежность.")
     pdf.ln(4)
     
-    if simsun_path:
-        pdf.add_font("CJKFont", "", simsun_path)
-        pdf.set_font("CJKFont", "", 12)
-        pdf.cell(0, 8, "3. CJK Script Segment (中日韩文字)", new_x="LMARGIN", new_y="NEXT")
-        pdf.multi_cell(0, 7, "测试中文文档解析能力: 你好世界。文档转换质量必须保持字形和语义的完整。")
+    # CJK segment is required - fail if not present
+    pdf.add_font("CJKFont", "", cjk_path)
+    pdf.set_font("CJKFont", "", 12)
+    pdf.cell(0, 8, "3. CJK Script Segment (中日韩文字)", new_x="LMARGIN", new_y="NEXT")
+    pdf.multi_cell(0, 7, "测试中文文档解析能力: 你好世界。文档转换质量必须保持字形和语义的完整。")
     
     out_path = FIXTURES_DIR / "F15_mixed_unicode.pdf"
     pdf.output(str(out_path))

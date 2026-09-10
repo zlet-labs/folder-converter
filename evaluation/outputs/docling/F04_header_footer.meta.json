@@ -1,9 +1,9 @@
 {
   "arm": "docling",
   "fixture": "F04_header_footer.pdf",
-  "duration_seconds": 4.0439,
-  "start_rss_mb": 1017.92,
-  "peak_rss_mb": 1115.44,
+  "duration_seconds": 3.8715,
+  "start_rss_mb": 1110.05,
+  "peak_rss_mb": 1208.31,
   "success": true,
   "error": null,
   "char_count": 411,
@@ -14,6 +14,7 @@
     "num_tables": 0,
     "num_pictures": 0,
     "has_provenance_bboxes": true,
+    "valid_bbox_count": 8,
     "keys": [
       "schema_name",
       "version",

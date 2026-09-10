@@ -1,9 +1,9 @@
 {
   "arm": "docling",
   "fixture": "F13_empty.pdf",
-  "duration_seconds": 2.3633,
-  "start_rss_mb": 1264.98,
-  "peak_rss_mb": 1271.21,
+  "duration_seconds": 2.0175,
+  "start_rss_mb": 1281.76,
+  "peak_rss_mb": 1282.8,
   "success": true,
   "error": null,
   "char_count": 0,
@@ -14,6 +14,7 @@
     "num_tables": 0,
     "num_pictures": 0,
     "has_provenance_bboxes": false,
+    "valid_bbox_count": 0,
     "keys": [
       "schema_name",
       "version",

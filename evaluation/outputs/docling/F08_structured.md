@@ -23,4 +23,4 @@ Key requirements are tracked in the following list:
 | DOCX     | Primary        | Full Markdown   |
 | PDF      | Evaluation     | Under Spike     |
 
-Repository link: https://github.com/zlet-labs/zlet-converter
+For complete source code and updates, visit the [Zlet Converter GitHub Repository](https://github.com/zlet-labs/zlet-converter) .

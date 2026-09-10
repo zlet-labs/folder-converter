@@ -6,6 +6,12 @@ import argparse
 import psutil
 from pathlib import Path
 
+# Enforce UTF-8 on stdout/stderr
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 FIXTURES_DIR = Path("evaluation/fixtures")
 OUTPUTS_DIR = Path("evaluation/outputs")
 
@@ -38,9 +44,34 @@ ALL_FIXTURES = [
     "F15_mixed_unicode.pdf"
 ]
 
+EXPECTED_TO_FAIL = ["F14_corrupted.pdf"]
+EXPECTED_EMPTY = ["F13_empty.pdf"]
+
 def get_process_memory_mb():
     process = psutil.Process(os.getpid())
     return process.memory_info().rss / (1024 * 1024)
+
+def check_provenance_bboxes(texts):
+    """
+    Inspect nonempty provenance entries for required page and coordinate data (l, t, r, b).
+    Returns (has_valid_bboxes, valid_count).
+    """
+    valid_count = 0
+    for t in texts:
+        if isinstance(t, dict):
+            prov_list = t.get("prov")
+            if isinstance(prov_list, list) and len(prov_list) > 0:
+                for p in prov_list:
+                    if isinstance(p, dict):
+                        bbox = p.get("bbox")
+                        page_no = p.get("page_no")
+                        if (
+                            isinstance(page_no, int)
+                            and isinstance(bbox, dict)
+                            and all(k in bbox for k in ("l", "t", "r", "b"))
+                        ):
+                            valid_count += 1
+    return (valid_count > 0), valid_count
 
 def run_baseline_fixture(fixture_path):
     ext = fixture_path.suffix.lower()
@@ -127,19 +158,19 @@ def run_docling_fixture(converter, fixture_path):
         md_content = result.document.export_to_markdown()
         doc_dict = result.document.export_to_dict()
         
-        # Analyze structure / provenance
         texts = doc_dict.get("texts", [])
         tables = doc_dict.get("tables", [])
         pictures = doc_dict.get("pictures", [])
         pages = doc_dict.get("pages", {})
         
-        has_bboxes = any("prov" in t for t in texts if isinstance(t, dict))
+        has_bboxes, valid_bbox_count = check_provenance_bboxes(texts)
         provenance_info = {
             "num_pages": len(pages),
             "num_texts": len(texts),
             "num_tables": len(tables),
             "num_pictures": len(pictures),
             "has_provenance_bboxes": has_bboxes,
+            "valid_bbox_count": valid_bbox_count,
             "keys": list(doc_dict.keys())
         }
     except Exception as ex:
@@ -163,11 +194,11 @@ def run_docling_fixture(converter, fixture_path):
     return md_content, meta
 
 def run_suite(fixture_names, arm="both", determinism_check=True):
-    print(f"==================================================")
-    print(f"Starting Evaluation Suite")
+    print("==================================================")
+    print("Starting Evaluation Suite")
     print(f"Fixtures count: {len(fixture_names)}")
     print(f"Arm: {arm}")
-    print(f"==================================================")
+    print("==================================================")
     
     converter = None
     if arm in ("docling", "both"):
@@ -178,11 +209,13 @@ def run_suite(fixture_names, arm="both", determinism_check=True):
         print(f"DocumentConverter ready in {time.perf_counter() - t0:.2f}s")
         
     summary = []
+    failed_fixtures = []
     
     for fname in fixture_names:
         fpath = FIXTURES_DIR / fname
         if not fpath.exists():
-            print(f"Warning: Fixture {fname} not found!")
+            print(f"Error: Fixture {fname} not found!")
+            failed_fixtures.append((fname, "Fixture file not found"))
             continue
             
         print(f"\nEvaluating: {fname} ({fpath.stat().st_size} bytes)")
@@ -202,6 +235,19 @@ def run_suite(fixture_names, arm="both", determinism_check=True):
             print(f"  [docling]  {status_str} | {meta_doc['duration_seconds']}s | {meta_doc['char_count']} chars | peak RSS {meta_doc['peak_rss_mb']}MB")
             summary.append(meta_doc)
             
+            # Check expected pass/fail status
+            if fname in EXPECTED_TO_FAIL:
+                if meta_doc["success"]:
+                    print(f"  --> UNEXPECTED PASS for {fname} (was expected to fail)")
+                    failed_fixtures.append((fname, "Expected to fail, but succeeded"))
+            else:
+                if not meta_doc["success"]:
+                    print(f"  --> CONVERSION FAILED for {fname}: {meta_doc['error']}")
+                    failed_fixtures.append((fname, meta_doc["error"]))
+                elif fname not in EXPECTED_EMPTY and meta_doc["char_count"] == 0:
+                    print(f"  --> ZERO CHARACTERS extracted for non-empty fixture {fname}")
+                    failed_fixtures.append((fname, "Zero characters extracted"))
+            
         # Baseline arm
         if arm in ("baseline", "both"):
             out_arm_dir = OUTPUTS_DIR / "baseline"
@@ -218,6 +264,7 @@ def run_suite(fixture_names, arm="both", determinism_check=True):
             summary.append(meta_base)
 
     # Determinism test
+    determinism_failures = []
     if determinism_check and arm in ("docling", "both"):
         print("\n--- Running Determinism Verification (F01 & F03) ---")
         for d_fname in ["F01_simple_text.pdf", "F03_table.pdf"]:
@@ -229,20 +276,40 @@ def run_suite(fixture_names, arm="both", determinism_check=True):
             second_md, _ = run_docling_fixture(converter, df_path)
             is_identical = (first_run_md == second_md)
             print(f"  {d_fname} run1 == run2: {is_identical} (bytes: {len(first_run_md.encode('utf-8'))} vs {len(second_md.encode('utf-8'))})")
+            if not is_identical:
+                determinism_failures.append(d_fname)
 
-    # Save complete summary
-    summary_path = OUTPUTS_DIR / f"summary_{'gate' if len(fixture_names) == 8 else 'all'}_{arm}.json"
+    # Save summary
+    suite_type = 'gate' if len(fixture_names) == 8 else 'all' if len(fixture_names) == 15 else 'custom'
+    summary_path = OUTPUTS_DIR / f"summary_{suite_type}_{arm}.json"
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"\nEvaluation run complete. Summary written to {summary_path}")
+
+    # Enforce failure exit status on errors
+    total_errors = len(failed_fixtures) + len(determinism_failures)
+    if total_errors > 0:
+        print(f"\n[FAIL] SUITE FAILED with {total_errors} issue(s):")
+        for f, err in failed_fixtures:
+            print(f"  - Fixture Failure: {f} ({err})")
+        for d in determinism_failures:
+            print(f"  - Determinism Mismatch: {d}")
+        sys.exit(1)
+    else:
+        print("\n[PASS] SUITE PASSED: All fixtures performed according to expected criteria.")
+        sys.exit(0)
 
 def main():
     parser = argparse.ArgumentParser(description="Docling Evaluation Benchmark Runner")
     parser.add_argument("--set", choices=["gate", "all"], default="gate", help="Fixture set: gate (8) or all (15)")
+    parser.add_argument("--fixtures", type=str, default=None, help="Comma-separated list of fixture filenames")
     parser.add_argument("--arm", choices=["docling", "baseline", "both"], default="both", help="Evaluation arm")
     parser.add_argument("--no-determinism", action="store_true", help="Skip determinism verification")
     args = parser.parse_args()
     
-    fixtures = GATE_FIXTURES if args.set == "gate" else ALL_FIXTURES
+    if args.fixtures:
+        fixtures = [f.strip() for f in args.fixtures.split(",") if f.strip()]
+    else:
+        fixtures = GATE_FIXTURES if args.set == "gate" else ALL_FIXTURES
     run_suite(fixtures, arm=args.arm, determinism_check=not args.no_determinism)
 
 if __name__ == "__main__":

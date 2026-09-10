@@ -22,4 +22,4 @@ Serialize tree to canonical GitHub-flavored Markdown
 
 Capability Matrix
 
-Repository link: https://github.com/zlet-labs/zlet-converter
+For complete source code and updates, visit the Zlet Converter GitHub Repository.

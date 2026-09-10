@@ -1,9 +1,9 @@
 {
   "arm": "baseline",
   "fixture": "F11_structural.html",
-  "duration_seconds": 0.0021,
-  "start_rss_mb": 1148.11,
-  "peak_rss_mb": 1148.11,
+  "duration_seconds": 0.0023,
+  "start_rss_mb": 1266.21,
+  "peak_rss_mb": 1266.22,
   "success": true,
   "error": null,
   "char_count": 503,
