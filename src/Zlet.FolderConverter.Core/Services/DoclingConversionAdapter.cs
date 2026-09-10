@@ -94,6 +94,10 @@ public sealed class DoclingConversionAdapter : IConversionAdapter
                 "Преобразование превысило допустимое время.",
             "docling_worker_missing" =>
                 "Компонент Markdown недоступен.",
+            "docling_version_incompatible" =>
+                "Версия компонента Markdown несовместима с текущим приложением.",
+            "docling_worker_start_failure" =>
+                "Не удалось запустить процесс Markdown.",
             _ when !string.IsNullOrWhiteSpace(result.ErrorMessage) =>
                 result.ErrorMessage,
             _ => "Не удалось преобразовать документ в Markdown."

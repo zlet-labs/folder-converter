@@ -1,0 +1,23 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="5;url=http://127.0.0.1:__PORT__/meta-leak">
+    <title>Adversarial HTML Security Benchmark</title>
+    <link rel="stylesheet" href="http://127.0.0.1:__PORT__/style.css">
+    <script src="http://127.0.0.1:__PORT__/tracker.js"></script>
+    <script>
+        document.write("Malicious dynamic script executed");
+    </script>
+    <style>
+        body { background: url('http://127.0.0.1:__PORT__/css-bg.png'); }
+    </style>
+</head>
+<body>
+    <h1>Security Benchmark Document</h1>
+    <p>This document tests that dangerous tags and remote resources are completely removed.</p>
+    <p>Legitimate hyper-reference: <a href="http://127.0.0.1:__PORT__/safe-reference">Safe External Link</a></p>
+    <img src="http://127.0.0.1:__PORT__/tracking-beacon.png" alt="Tracking Beacon" />
+    <img src="//127.0.0.1:__PORT__/schemeless-tracker.png" alt="Schemeless Tracker" />
+</body>
+</html>

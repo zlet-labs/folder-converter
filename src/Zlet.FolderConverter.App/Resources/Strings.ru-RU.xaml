@@ -126,6 +126,7 @@
   <sys:String x:Key="DoclingAvailable">доступен</sys:String>
   <sys:String x:Key="DoclingUnavailable">недоступен</sys:String>
   <sys:String x:Key="DoclingComponentUnavailable">Компонент Markdown недоступен.</sys:String>
+  <sys:String x:Key="DoclingVersionIncompatible">Версия компонента Markdown несовместима с текущим приложением.</sys:String>
   <sys:String x:Key="ScannedPdfUnsupported">PDF не содержит извлекаемого текста (возможно, отсканированный документ). Оптическое распознавание текста (OCR) не поддерживается.</sys:String>
   <sys:String x:Key="DoclingConversionFailed">Не удалось преобразовать документ в Markdown.</sys:String>
 </ResourceDictionary>

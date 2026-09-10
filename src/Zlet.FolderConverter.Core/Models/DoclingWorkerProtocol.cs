@@ -26,4 +26,6 @@ public sealed record DoclingHandshakeResponse(
     bool Ready = false,
     string Version = "",
     string PythonVersion = "",
-    string DoclingVersion = "");
+    string DoclingVersion = "",
+    string ErrorCode = "",
+    string ErrorMessage = "");

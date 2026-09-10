@@ -9,10 +9,37 @@ public sealed record DoclingWorkerOptions
 {
     public string? PythonExecutablePath { get; init; }
     public string? WorkerScriptPath { get; init; }
-    public TimeSpan? Timeout { get; init; }
-    public TimeSpan BaseTimeout { get; init; } = TimeSpan.FromSeconds(60);
-    public TimeSpan MaxTimeout { get; init; } = TimeSpan.FromMinutes(10);
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(10);
     public TimeSpan ShutdownTimeout { get; init; } = TimeSpan.FromSeconds(2);
+}
+
+internal sealed class DoclingVersionIncompatibleException(string message) : Exception(message);
+
+public sealed class StderrBuffer(int maxCapacity = 32 * 1024)
+{
+    private readonly StringBuilder _buffer = new();
+    private readonly object _lock = new();
+
+    public void Append(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        lock (_lock)
+        {
+            _buffer.AppendLine(text);
+            if (_buffer.Length > maxCapacity)
+            {
+                _buffer.Remove(0, _buffer.Length - maxCapacity);
+            }
+        }
+    }
+
+    public string GetContent()
+    {
+        lock (_lock)
+        {
+            return _buffer.ToString();
+        }
+    }
 }
 
 public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
@@ -94,6 +121,10 @@ public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
                 {
                     _session = StartSession();
                 }
+                catch (DoclingVersionIncompatibleException)
+                {
+                    return new(false, "docling_version_incompatible", "Версия компонента Markdown несовместима с текущим приложением.");
+                }
                 catch
                 {
                     return new(false, "docling_worker_start_failure", "Не удалось запустить процесс Markdown.");
@@ -101,7 +132,7 @@ public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
             }
 
             var result = await ExecuteAsync(_session, request, cancellationToken);
-            if (_session.Process.WorkingSet64 > 1887436800L) // > 1.75 GB RSS watchdog at safe boundary
+            if (_session is not null && !_session.Process.HasExited && _session.Process.WorkingSet64 > 1887436800L) // > 1.75 GB RSS watchdog at safe boundary
             {
                 await ShutdownSessionAsync(force: false);
             }
@@ -141,6 +172,16 @@ public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
         var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Failed to launch Markdown worker process.");
 
+        var stderrBuffer = new StderrBuffer(32 * 1024);
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data is not null)
+            {
+                stderrBuffer.Append(e.Data);
+            }
+        };
+        process.BeginErrorReadLine();
+
         // Read and validate startup handshake
         var readyLine = process.StandardOutput.ReadLine();
         if (string.IsNullOrWhiteSpace(readyLine))
@@ -155,13 +196,39 @@ public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
             if (handshake is null || !handshake.Ready)
             {
                 try { process.Kill(entireProcessTree: true); } catch { }
+                if (handshake?.ErrorCode == "docling_version_incompatible")
+                {
+                    throw new DoclingVersionIncompatibleException(handshake.ErrorMessage);
+                }
                 throw new InvalidOperationException("Markdown worker reported not ready.");
             }
 
-            if (!string.IsNullOrWhiteSpace(handshake.Version) && !handshake.Version.StartsWith("1."))
+            if (handshake.Version != "1.0.0")
             {
                 try { process.Kill(entireProcessTree: true); } catch { }
-                throw new InvalidOperationException($"Markdown worker protocol version mismatch: {handshake.Version}");
+                throw new DoclingVersionIncompatibleException($"Markdown worker protocol version mismatch: {handshake.Version}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(handshake.PythonVersion))
+            {
+                var parts = handshake.PythonVersion.Split('.');
+                if (parts.Length >= 2
+                    && int.TryParse(parts[0], out var major)
+                    && int.TryParse(parts[1], out var minor))
+                {
+                    if (major != 3 || minor < 10 || minor > 12)
+                    {
+                        try { process.Kill(entireProcessTree: true); } catch { }
+                        throw new DoclingVersionIncompatibleException($"Incompatible Python version: {handshake.PythonVersion} (expected 3.10-3.12)");
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(handshake.DoclingVersion)
+                && !handshake.DoclingVersion.StartsWith("2."))
+            {
+                try { process.Kill(entireProcessTree: true); } catch { }
+                throw new DoclingVersionIncompatibleException($"Incompatible Docling version: {handshake.DoclingVersion} (expected 2.x)");
             }
         }
         catch (JsonException ex)
@@ -170,31 +237,7 @@ public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
             throw new InvalidOperationException($"Markdown worker invalid handshake: {ex.Message}");
         }
 
-        return new WorkerSession(process);
-    }
-
-    private TimeSpan GetTimeout(string sourcePath)
-    {
-        if (_options.Timeout is { } explicitTimeout)
-        {
-            return explicitTimeout;
-        }
-
-        long fileLength = 0;
-        try
-        {
-            if (File.Exists(sourcePath))
-            {
-                fileLength = new FileInfo(sourcePath).Length;
-            }
-        }
-        catch
-        {
-        }
-
-        var seconds = _options.BaseTimeout.TotalSeconds + (fileLength / (1024.0 * 1024.0)) * 15.0;
-        var clamped = Math.Clamp(seconds, _options.BaseTimeout.TotalSeconds, _options.MaxTimeout.TotalSeconds);
-        return TimeSpan.FromSeconds(clamped);
+        return new WorkerSession(process, stderrBuffer);
     }
 
     private async Task<DoclingWorkerExecutionResult> ExecuteAsync(
@@ -202,9 +245,8 @@ public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
         DoclingWorkerRequest request,
         CancellationToken cancellationToken)
     {
-        var timeout = GetTimeout(request.SourcePath);
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        linkedCts.CancelAfter(timeout);
+        linkedCts.CancelAfter(_options.Timeout);
 
         try
         {
@@ -365,9 +407,10 @@ public sealed class DoclingWorkerProcessRunner : IDoclingWorkerRunner
         return null;
     }
 
-    private sealed class WorkerSession(Process process) : IDisposable
+    private sealed class WorkerSession(Process process, StderrBuffer stderr) : IDisposable
     {
         public Process Process { get; } = process;
+        public StderrBuffer Stderr { get; } = stderr;
 
         public void Dispose()
         {

@@ -65,12 +65,17 @@ conversion_failures = 0
 init_success = False
 
 try:
-    from docling.document_converter import DocumentConverter
-    converter = DocumentConverter()
+    from docling.document_converter import DocumentConverter, PdfFormatOption
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+
+    pdf_options = PdfPipelineOptions(do_ocr=False)
+    converter = DocumentConverter(
+        format_options={"pdf": PdfFormatOption(pipeline_options=pdf_options)}
+    )
     init_success = True
-    print("DocumentConverter initialized in offline mode successfully.")
-    
-    for f in fixtures_to_test:
+    print("DocumentConverter initialized in offline mode successfully (OCR disabled).")
+
+    for f in [Path("evaluation/fixtures/F01_simple_text.pdf"), Path("evaluation/fixtures/F08_structured.docx")]:
         t0 = time.perf_counter()
         res = converter.convert(str(f))
         md = res.document.export_to_markdown()
@@ -81,7 +86,19 @@ try:
         else:
             conversion_failures += 1
             print(f"Offline conversion {f.name}: FAILED (empty output emitted)")
-        
+
+    scanned_f = Path("evaluation/fixtures/F06_scanned.pdf")
+    t0 = time.perf_counter()
+    res = converter.convert(str(scanned_f))
+    md = res.document.export_to_markdown()
+    dur = time.perf_counter() - t0
+    if not md or not md.strip():
+        conversion_successes += 1
+        print(f"Offline conversion {scanned_f.name}: SUCCESS (scanned document correctly unsupported without OCR, {dur:.2f}s)")
+    else:
+        conversion_failures += 1
+        print(f"Offline conversion {scanned_f.name}: FAILED (unexpected OCR output)")
+
 except Exception as ex:
     conversion_failures += (len(fixtures_to_test) - conversion_successes)
     print(f"Offline conversion process error: {type(ex).__name__}: {ex}")

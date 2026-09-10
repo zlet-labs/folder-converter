@@ -34,12 +34,10 @@ public sealed class DocumentToMarkdownBatchTests : IDisposable
         }
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
+    [MarkdownIntegrationFact]
     public async Task Mixed_batch_markdown_conversion_to_folder_and_report_verification()
     {
         var runner = new DoclingWorkerProcessRunner();
-        if (!runner.IsAvailable) return;
 
         // Populate mixed files
         CopyFixture("F08_structured.docx", "document.docx");
@@ -109,12 +107,10 @@ public sealed class DocumentToMarkdownBatchTests : IDisposable
         }
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
+    [MarkdownIntegrationFact]
     public async Task Mixed_batch_markdown_conversion_to_zip_archive()
     {
         var runner = new DoclingWorkerProcessRunner();
-        if (!runner.IsAvailable) return;
 
         CopyFixture("F11_structural.html", "article.html");
         File.WriteAllText(Path.Combine(_sourceDir, "readme.txt"), "readme plain text");

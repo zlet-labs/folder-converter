@@ -65,6 +65,7 @@ public static class OperationMessageLocalizer
             ["office_com_failure"] = "OperationOfficeFailure",
             ["scanned_pdf_unsupported"] = "ScannedPdfUnsupported",
             ["docling_worker_missing"] = "DoclingComponentUnavailable",
+            ["docling_version_incompatible"] = "DoclingVersionIncompatible",
             ["docling_worker_timeout"] = "OperationTimeout",
             ["docling_conversion_failed"] = "DoclingConversionFailed",
             ["output_invalid_utf8"] = "OperationOutputInvalid",
@@ -101,6 +102,7 @@ public static class OperationMessageLocalizer
             ["PDF не содержит извлекаемого текста (возможно, отсканированный документ). Оптическое распознавание текста (OCR) не поддерживается."] = "ScannedPdfUnsupported",
             ["Компонент Markdown недоступен."] = "DoclingComponentUnavailable",
             ["Компонент преобразования Docling недоступен."] = "DoclingComponentUnavailable",
+            ["Версия компонента Markdown несовместима с текущим приложением."] = "DoclingVersionIncompatible",
             ["Не удалось преобразовать документ в Markdown."] = "DoclingConversionFailed"
         };
 

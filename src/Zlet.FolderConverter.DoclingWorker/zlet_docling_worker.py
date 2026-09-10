@@ -7,7 +7,8 @@ Communicates via line-delimited JSON over stdin / stdout.
 import sys
 import os
 import json
-import traceback
+import tempfile
+import datetime
 
 # Ensure strict offline execution and suppress benign symlink warnings
 os.environ["HF_HUB_OFFLINE"] = "1"
@@ -17,6 +18,19 @@ os.environ["PYTHONIOENCODING"] = "utf-8"
 os.environ["PYTHONUTF8"] = "1"
 
 _converter = None
+
+
+def validate_environment():
+    """Validates Python version and critical dependencies."""
+    if not (sys.version_info >= (3, 10) and sys.version_info < (3, 13)):
+        return False, f"Unsupported Python version: {sys.version.split()[0]} (expected 3.10-3.12)"
+    try:
+        import docling
+        import openpyxl
+        import bs4
+    except ImportError as e:
+        return False, f"Missing required dependency: {e.name}"
+    return True, ""
 
 
 def get_converter():
@@ -58,6 +72,57 @@ def convert_pptx(source_path):
     return md
 
 
+def format_cell_value(cell):
+    val = cell.value
+    if val is None:
+        return ""
+
+    if isinstance(val, str):
+        # Never output raw formula
+        if val.startswith("="):
+            return ""
+        return val.strip()
+
+    # Dates
+    if getattr(cell, "is_date", False) or isinstance(val, (datetime.date, datetime.datetime, datetime.time)):
+        if isinstance(val, datetime.datetime):
+            if val.hour == 0 and val.minute == 0 and val.second == 0 and val.microsecond == 0:
+                return val.strftime("%Y-%m-%d")
+            return val.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(val, datetime.date):
+            return val.strftime("%Y-%m-%d")
+        elif isinstance(val, datetime.time):
+            return val.strftime("%H:%M:%S")
+
+    fmt = getattr(cell, "number_format", "") or ""
+
+    if isinstance(val, (int, float)):
+        if "%" in fmt:
+            dec_places = 2
+            if "0.00%" in fmt:
+                dec_places = 2
+            elif "0.0%" in fmt:
+                dec_places = 1
+            elif "0%" in fmt:
+                dec_places = 0
+            return f"{val * 100:.{dec_places}f}%"
+
+        for sym in ("$", "€", "£", "¥", "₽"):
+            if sym in fmt:
+                if isinstance(val, float) and val.is_integer():
+                    return f"{sym}{int(val)}"
+                elif isinstance(val, (int, float)):
+                    return f"{sym}{val:,.2f}"
+
+        if isinstance(val, float):
+            if val.is_integer():
+                return str(int(val))
+            return f"{val:g}"
+        return str(val)
+
+    return str(val).strip()
+
+
 def convert_xlsx(source_path):
     import openpyxl
 
@@ -66,11 +131,12 @@ def convert_xlsx(source_path):
     for name in wb.sheetnames:
         ws = wb[name]
         parts.append(f"## {name}\n")
-        rows = list(ws.iter_rows(values_only=True))
+        rows = list(ws.iter_rows())
         content_rows = []
         for r in rows:
-            if any(c is not None and str(c).strip() != "" for c in r):
-                content_rows.append([str(c) if c is not None else "" for c in r])
+            formatted_row = [format_cell_value(c) for c in r]
+            if any(c != "" for c in formatted_row):
+                content_rows.append(formatted_row)
         if not content_rows:
             parts.append("*(Пустой лист)*\n")
             continue
@@ -88,10 +154,55 @@ def convert_xlsx(source_path):
 
 
 def convert_html(source_path):
-    converter = get_converter()
-    res = converter.convert(source_path)
-    md = res.document.export_to_markdown()
-    return md
+    from bs4 import BeautifulSoup
+
+    with open(source_path, "rb") as f:
+        raw_bytes = f.read()
+
+    html_text = ""
+    if raw_bytes.startswith(b"\xef\xbb\xbf"):
+        html_text = raw_bytes[3:].decode("utf-8", errors="replace")
+    elif raw_bytes.startswith(b"\xff\xfe"):
+        html_text = raw_bytes[2:].decode("utf-16-le", errors="replace")
+    elif raw_bytes.startswith(b"\xfe\xff"):
+        html_text = raw_bytes[2:].decode("utf-16-be", errors="replace")
+    else:
+        try:
+            html_text = raw_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            try:
+                html_text = raw_bytes.decode("windows-1251")
+            except UnicodeDecodeError:
+                html_text = raw_bytes.decode("latin-1")
+
+    soup = BeautifulSoup(html_text, "html.parser")
+    for tag_name in ("script", "style", "link", "meta", "head"):
+        for tag in soup.find_all(tag_name):
+            tag.decompose()
+
+    # Strip remote images to prevent SSRF / tracking / network leaks while preserving hyperlinks
+    for img in soup.find_all("img"):
+        src = img.get("src", "").strip()
+        if src.startswith(("http://", "https://", "//", "ftp://")) or "://" in src:
+            img.decompose()
+
+    sanitized_html = str(soup)
+
+    # Convert sanitized HTML via DocumentConverter using a temporary file
+    temp_fd, temp_file = tempfile.mkstemp(suffix=".html")
+    try:
+        with os.fdopen(temp_fd, "w", encoding="utf-8") as tf:
+            tf.write(sanitized_html)
+        converter = get_converter()
+        res = converter.convert(temp_file)
+        md = res.document.export_to_markdown()
+        return md
+    finally:
+        if os.path.exists(temp_file):
+            try:
+                os.remove(temp_file)
+            except OSError:
+                pass
 
 
 def convert_txt(source_path):
@@ -123,6 +234,16 @@ def convert_txt(source_path):
     return text
 
 
+def sanitize_error_message(msg):
+    """Sanitizes error messages to remove user home directory and private path leaks."""
+    if not msg:
+        return ""
+    user_home = os.path.expanduser("~")
+    if user_home and user_home in msg:
+        msg = msg.replace(user_home, "<user_home>")
+    return msg
+
+
 def process_request(req):
     req_id = req.get("id", "")
     source_path = req.get("sourcePath", "")
@@ -134,7 +255,7 @@ def process_request(req):
             "id": req_id,
             "success": False,
             "errorCode": "source_unreadable",
-            "errorMessage": f"Source file does not exist: {source_path}",
+            "errorMessage": "Source file does not exist.",
         }
 
     try:
@@ -181,7 +302,7 @@ def process_request(req):
             "id": req_id,
             "success": False,
             "errorCode": "conversion_error",
-            "errorMessage": err_str,
+            "errorMessage": sanitize_error_message(err_str),
         }
     except Exception as ex:
         err_msg = f"{type(ex).__name__}: {str(ex)}"
@@ -189,25 +310,31 @@ def process_request(req):
             "id": req_id,
             "success": False,
             "errorCode": "docling_conversion_failed",
-            "errorMessage": err_msg,
+            "errorMessage": sanitize_error_message(err_msg),
         }
 
 
 def main():
-    docling_version = "2.126.0"
-    try:
-        import importlib.metadata
-        docling_version = importlib.metadata.version("docling")
-    except Exception:
-        pass
+    env_ok, env_err = validate_environment()
 
-    # Send ready greeting with protocol and runtime versions
+    docling_version = "2.126.0"
+    if env_ok:
+        try:
+            import importlib.metadata
+            docling_version = importlib.metadata.version("docling")
+        except Exception:
+            pass
+
     greeting = {
-        "ready": True,
+        "ready": env_ok,
         "version": "1.0.0",
         "pythonVersion": sys.version.split()[0],
         "doclingVersion": docling_version,
     }
+    if not env_ok:
+        greeting["errorCode"] = "docling_version_incompatible"
+        greeting["errorMessage"] = env_err
+
     sys.stdout.write(json.dumps(greeting) + "\n")
     sys.stdout.flush()
 
@@ -228,7 +355,7 @@ def main():
                 "id": "",
                 "success": False,
                 "errorCode": "protocol_error",
-                "errorMessage": str(e),
+                "errorMessage": sanitize_error_message(str(e)),
             }
         sys.stdout.write(json.dumps(resp) + "\n")
         sys.stdout.flush()
