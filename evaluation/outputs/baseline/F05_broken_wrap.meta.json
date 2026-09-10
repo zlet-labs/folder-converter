@@ -1,0 +1,11 @@
+{
+  "arm": "baseline",
+  "fixture": "F05_broken_wrap.pdf",
+  "duration_seconds": 0.0053,
+  "start_rss_mb": 1122.67,
+  "peak_rss_mb": 1122.67,
+  "success": true,
+  "error": null,
+  "char_count": 382,
+  "line_count": 7
+}

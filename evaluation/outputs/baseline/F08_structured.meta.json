@@ -1,0 +1,11 @@
+{
+  "arm": "baseline",
+  "fixture": "F08_structured.docx",
+  "duration_seconds": 0.023,
+  "start_rss_mb": 1142.11,
+  "peak_rss_mb": 1146.82,
+  "success": true,
+  "error": null,
+  "char_count": 564,
+  "line_count": 25
+}

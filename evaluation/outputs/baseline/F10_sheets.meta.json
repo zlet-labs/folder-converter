@@ -1,0 +1,11 @@
+{
+  "arm": "baseline",
+  "fixture": "F10_sheets.xlsx",
+  "duration_seconds": 0.0116,
+  "start_rss_mb": 1148.02,
+  "peak_rss_mb": 1148.03,
+  "success": true,
+  "error": null,
+  "char_count": 421,
+  "line_count": 12
+}

@@ -1,0 +1,11 @@
+{
+  "arm": "baseline",
+  "fixture": "F15_mixed_unicode.pdf",
+  "duration_seconds": 0.0098,
+  "start_rss_mb": 1285.82,
+  "peak_rss_mb": 1285.82,
+  "success": true,
+  "error": null,
+  "char_count": 332,
+  "line_count": 7
+}

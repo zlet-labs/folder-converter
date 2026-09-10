@@ -1,0 +1,33 @@
+{
+  "arm": "docling",
+  "fixture": "F07_cyrillic.pdf",
+  "duration_seconds": 2.3574,
+  "start_rss_mb": 1175.86,
+  "peak_rss_mb": 1140.83,
+  "success": true,
+  "error": null,
+  "char_count": 553,
+  "line_count": 7,
+  "provenance": {
+    "num_pages": 1,
+    "num_texts": 4,
+    "num_tables": 0,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}

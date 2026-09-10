@@ -1,0 +1,33 @@
+{
+  "arm": "docling",
+  "fixture": "F08_structured.docx",
+  "duration_seconds": 0.1601,
+  "start_rss_mb": 1140.85,
+  "peak_rss_mb": 1142.11,
+  "success": true,
+  "error": null,
+  "char_count": 783,
+  "line_count": 26,
+  "provenance": {
+    "num_pages": 0,
+    "num_texts": 14,
+    "num_tables": 1,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}

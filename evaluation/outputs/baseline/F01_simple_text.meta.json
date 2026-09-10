@@ -1,0 +1,11 @@
+{
+  "arm": "baseline",
+  "fixture": "F01_simple_text.pdf",
+  "duration_seconds": 0.2112,
+  "start_rss_mb": 1033.8,
+  "peak_rss_mb": 1036.16,
+  "success": true,
+  "error": null,
+  "char_count": 843,
+  "line_count": 11
+}

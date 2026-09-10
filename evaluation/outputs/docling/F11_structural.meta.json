@@ -1,0 +1,33 @@
+{
+  "arm": "docling",
+  "fixture": "F11_structural.html",
+  "duration_seconds": 0.0302,
+  "start_rss_mb": 1148.03,
+  "peak_rss_mb": 1148.11,
+  "success": true,
+  "error": null,
+  "char_count": 606,
+  "line_count": 18,
+  "provenance": {
+    "num_pages": 0,
+    "num_texts": 11,
+    "num_tables": 1,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}

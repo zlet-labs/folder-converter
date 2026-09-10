@@ -1,0 +1,33 @@
+{
+  "arm": "docling",
+  "fixture": "F12_nested_lists.pdf",
+  "duration_seconds": 7.1501,
+  "start_rss_mb": 1148.11,
+  "peak_rss_mb": 1265.15,
+  "success": true,
+  "error": null,
+  "char_count": 491,
+  "line_count": 13,
+  "provenance": {
+    "num_pages": 1,
+    "num_texts": 12,
+    "num_tables": 0,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}

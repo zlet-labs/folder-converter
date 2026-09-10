@@ -1,0 +1,11 @@
+{
+  "arm": "baseline",
+  "fixture": "F02_multicolumn.pdf",
+  "duration_seconds": 0.0069,
+  "start_rss_mb": 1038.71,
+  "peak_rss_mb": 1038.71,
+  "success": true,
+  "error": null,
+  "char_count": 872,
+  "line_count": 20
+}

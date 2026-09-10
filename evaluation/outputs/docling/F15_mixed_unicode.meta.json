@@ -1,0 +1,33 @@
+{
+  "arm": "docling",
+  "fixture": "F15_mixed_unicode.pdf",
+  "duration_seconds": 2.3056,
+  "start_rss_mb": 1271.25,
+  "peak_rss_mb": 1285.82,
+  "success": true,
+  "error": null,
+  "char_count": 347,
+  "line_count": 13,
+  "provenance": {
+    "num_pages": 1,
+    "num_texts": 7,
+    "num_tables": 0,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}
