@@ -1,0 +1,12 @@
+{
+  "arm": "baseline",
+  "fixture": "F14_corrupted.pdf",
+  "duration_seconds": 0.0005,
+  "start_rss_mb": 1283.21,
+  "post_rss_mb": 1283.23,
+  "peak_rss_mb": 1283.23,
+  "success": false,
+  "error": "PdfStreamError: Stream has ended unexpectedly",
+  "char_count": 0,
+  "line_count": 0
+}

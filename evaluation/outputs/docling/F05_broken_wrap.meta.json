@@ -1,0 +1,35 @@
+{
+  "arm": "docling",
+  "fixture": "F05_broken_wrap.pdf",
+  "duration_seconds": 2.4235,
+  "start_rss_mb": 1199.31,
+  "post_rss_mb": 1185.98,
+  "peak_rss_mb": 1252.03,
+  "success": true,
+  "error": null,
+  "char_count": 376,
+  "line_count": 3,
+  "provenance": {
+    "num_pages": 1,
+    "num_texts": 2,
+    "num_tables": 0,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "valid_bbox_count": 2,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}

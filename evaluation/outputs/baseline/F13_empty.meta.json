@@ -1,0 +1,12 @@
+{
+  "arm": "baseline",
+  "fixture": "F13_empty.pdf",
+  "duration_seconds": 0.0013,
+  "start_rss_mb": 1164.05,
+  "post_rss_mb": 1164.06,
+  "peak_rss_mb": 1164.07,
+  "success": true,
+  "error": null,
+  "char_count": 0,
+  "line_count": 0
+}

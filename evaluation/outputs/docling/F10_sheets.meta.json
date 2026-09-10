@@ -1,0 +1,35 @@
+{
+  "arm": "docling",
+  "fixture": "F10_sheets.xlsx",
+  "duration_seconds": 0.0139,
+  "start_rss_mb": 1261.65,
+  "post_rss_mb": 1261.9,
+  "peak_rss_mb": 1261.9,
+  "success": true,
+  "error": null,
+  "char_count": 704,
+  "line_count": 12,
+  "provenance": {
+    "num_pages": 2,
+    "num_texts": 0,
+    "num_tables": 2,
+    "num_pictures": 0,
+    "has_provenance_bboxes": false,
+    "valid_bbox_count": 0,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}

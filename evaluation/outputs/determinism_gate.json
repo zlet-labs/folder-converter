@@ -1,0 +1,58 @@
+[
+  {
+    "fixture": "F01_simple_text.pdf",
+    "is_identical": true,
+    "bytes": 874,
+    "run1_sha256": "02dcf29bd8bbfe91ffa8e53f2e0ec7a8d7ecb903afca410be25601f25c0d07aa",
+    "run2_sha256": "02dcf29bd8bbfe91ffa8e53f2e0ec7a8d7ecb903afca410be25601f25c0d07aa"
+  },
+  {
+    "fixture": "F02_multicolumn.pdf",
+    "is_identical": true,
+    "bytes": 929,
+    "run1_sha256": "b5c433aa10c94646d23808e76142cae6db9f8291ae2c2fe8cb3e347ff16dbdab",
+    "run2_sha256": "b5c433aa10c94646d23808e76142cae6db9f8291ae2c2fe8cb3e347ff16dbdab"
+  },
+  {
+    "fixture": "F03_table.pdf",
+    "is_identical": true,
+    "bytes": 445,
+    "run1_sha256": "9ae57094259505c38cae399133a4dd3ebccfea6d7bff926378ffbdaf109e8207",
+    "run2_sha256": "9ae57094259505c38cae399133a4dd3ebccfea6d7bff926378ffbdaf109e8207"
+  },
+  {
+    "fixture": "F06_scanned.pdf",
+    "is_identical": true,
+    "bytes": 482,
+    "run1_sha256": "0c6956695ae5bde17d85e96d4af9bdf63797f3d2d4de90d28e6fa5883c357ec5",
+    "run2_sha256": "0c6956695ae5bde17d85e96d4af9bdf63797f3d2d4de90d28e6fa5883c357ec5"
+  },
+  {
+    "fixture": "F07_cyrillic.pdf",
+    "is_identical": true,
+    "bytes": 978,
+    "run1_sha256": "9e14d840291b0cbf37fd81d2b1b22863f5efb4802a8c8e22bc3be6880959e718",
+    "run2_sha256": "9e14d840291b0cbf37fd81d2b1b22863f5efb4802a8c8e22bc3be6880959e718"
+  },
+  {
+    "fixture": "F08_structured.docx",
+    "is_identical": true,
+    "bytes": 852,
+    "run1_sha256": "a5cc8b57686383bddf8ba085d9108621590d6d6ed560d6fd1849fde6e1640149",
+    "run2_sha256": "a5cc8b57686383bddf8ba085d9108621590d6d6ed560d6fd1849fde6e1640149"
+  },
+  {
+    "fixture": "F09_slides.pptx",
+    "is_identical": true,
+    "bytes": 481,
+    "run1_sha256": "6384fde2722c461b79d1da042fe9c203be6b0c0e52a300439e24b2bd68baeb35",
+    "run2_sha256": "6384fde2722c461b79d1da042fe9c203be6b0c0e52a300439e24b2bd68baeb35"
+  },
+  {
+    "fixture": "F13_empty.pdf",
+    "is_identical": true,
+    "bytes": 0,
+    "run1_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run2_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

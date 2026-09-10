@@ -1,0 +1,12 @@
+{
+  "arm": "baseline",
+  "fixture": "F06_scanned.pdf",
+  "duration_seconds": 0.0061,
+  "start_rss_mb": 1184.8,
+  "post_rss_mb": 1190.87,
+  "peak_rss_mb": 1190.87,
+  "success": true,
+  "error": null,
+  "char_count": 0,
+  "line_count": 0
+}

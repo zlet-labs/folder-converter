@@ -1,0 +1,12 @@
+{
+  "arm": "baseline",
+  "fixture": "F09_slides.pptx",
+  "duration_seconds": 0.0056,
+  "start_rss_mb": 1167.62,
+  "post_rss_mb": 1167.7,
+  "peak_rss_mb": 1167.7,
+  "success": true,
+  "error": null,
+  "char_count": 264,
+  "line_count": 13
+}

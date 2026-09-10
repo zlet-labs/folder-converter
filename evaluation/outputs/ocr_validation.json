@@ -1,0 +1,39 @@
+{
+  "fixture": "F06_scanned.pdf",
+  "description": "Scanned document with synthetic noise, blur, and skew (RNG seed=42)",
+  "ground_truth": {
+    "raw_character_count": 476,
+    "normalized_character_count": 475,
+    "word_count": 66,
+    "text": "OFFICIAL NOTICE: OCR CAPABILITY TEST Document Identifier: SC-98421 Date of Certification: September 2026 Issuer: Zlet Systems Quality Assessment Group This scanned image tests whether the OCR subsystem activates accurately on non-searchable rasterized PDF pages with synthetic scan degradation. All characters in this paragraph must be recognized without errors. The quick brown fox jumps over the lazy dog. Expected result: clean extracted markdown text with intact wording."
+  },
+  "extracted_docling": {
+    "raw_character_count": 482,
+    "normalized_character_count": 475,
+    "word_count": 66,
+    "raw_markdown_overhead_chars": 7,
+    "text": "OFFICIAL NOTICE: OCR CAPABILITY TEST Document Identifier: SC-98421 Date of Certification: September 2026 Issuer: Zlet Systems Quality Assessment Group This scanned image tests whether the OCR subsystem activates accurately on non-searchable rasterized PDF pages with synthetic scan degradation. All characters in this paragraph must be recognized without errors. The quick brown fox jumps over the lazy dog. Expected result: clean extracted markdown text with intact wording."
+  },
+  "normalization_rules": [
+    "Stripped Markdown structural heading tokens ('^#+\\s*') from extracted text",
+    "Collapsed all consecutive whitespace (newlines, multiple spaces) to single space",
+    "Trimmed leading and trailing whitespace"
+  ],
+  "metrics": {
+    "exact_match": true,
+    "character_errors": 0,
+    "character_error_rate_percent": 0.0,
+    "character_recall_percent": 100.0,
+    "character_accuracy_percent": 100.0,
+    "word_count_match": true,
+    "word_errors": 0
+  },
+  "baseline_direct_extractor": {
+    "arm": "pypdf",
+    "raw_character_count": 0,
+    "normalized_character_count": 0,
+    "ocr_activated": false
+  },
+  "verdict": "PASS",
+  "notes": "The 482 raw character count in F06_scanned.md includes 475 normalized text characters plus 7 Markdown formatting characters (3 for '## ' heading prefix and 4 newline delimiters). All 475 normalized semantic characters match ground truth with 0 edit distance errors (CER 0.00%)."
+}

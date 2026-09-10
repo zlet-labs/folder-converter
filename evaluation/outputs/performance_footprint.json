@@ -1,0 +1,23 @@
+{
+  "storage": {
+    "venv_size_mb": 1171.34,
+    "huggingface_cache_mb": 505.45,
+    "rapidocr_models_mb": 61.02,
+    "total_models_mb": 566.47
+  },
+  "startup_timings_seconds": {
+    "import_docling": 0.0402,
+    "import_document_converter": 6.8135,
+    "document_converter_init": 0.0953,
+    "total_cold_init": 6.9088
+  },
+  "f01_conversion_benchmarks": {
+    "cold_child_process_duration_seconds": 16.2215,
+    "cold_child_process_peak_rss_mb": 1107.57,
+    "in_process_first_conversion_duration_seconds": 12.406,
+    "in_process_first_conversion_peak_rss_mb": 1099.75,
+    "in_process_warm_conversion_duration_seconds": 2.9465,
+    "in_process_warm_conversion_peak_rss_mb": 1084.87,
+    "suite_run_f01_duration_seconds": 10.6004
+  }
+}

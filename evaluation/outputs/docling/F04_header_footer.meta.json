@@ -1,0 +1,35 @@
+{
+  "arm": "docling",
+  "fixture": "F04_header_footer.pdf",
+  "duration_seconds": 4.4996,
+  "start_rss_mb": 1106.8,
+  "post_rss_mb": 1199.56,
+  "peak_rss_mb": 1251.4,
+  "success": true,
+  "error": null,
+  "char_count": 411,
+  "line_count": 7,
+  "provenance": {
+    "num_pages": 2,
+    "num_texts": 8,
+    "num_tables": 0,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "valid_bbox_count": 8,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}

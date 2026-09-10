@@ -1,0 +1,35 @@
+{
+  "arm": "docling",
+  "fixture": "F02_multicolumn.pdf",
+  "duration_seconds": 3.0607,
+  "start_rss_mb": 1000.71,
+  "post_rss_mb": 1051.0,
+  "peak_rss_mb": 1089.26,
+  "success": true,
+  "error": null,
+  "char_count": 929,
+  "line_count": 13,
+  "provenance": {
+    "num_pages": 1,
+    "num_texts": 7,
+    "num_tables": 0,
+    "num_pictures": 0,
+    "has_provenance_bboxes": true,
+    "valid_bbox_count": 7,
+    "keys": [
+      "schema_name",
+      "version",
+      "name",
+      "origin",
+      "furniture",
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables",
+      "key_value_items",
+      "form_items",
+      "pages"
+    ]
+  }
+}
