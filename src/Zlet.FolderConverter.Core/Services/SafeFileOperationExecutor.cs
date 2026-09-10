@@ -90,10 +90,11 @@ internal sealed class SafeFileOperationExecutor
             $"result{operation.TargetExtension}");
         string? stagingPath = null;
         var allowEmptyCopy = operation.Target == ConversionTarget.Copy
-            && operation.SourceFormat is SourceFormat.Csv or SourceFormat.Tsv && snapshot.Length == 0;
+            && operation.SourceFormat is SourceFormat.Csv or SourceFormat.Tsv or SourceFormat.Txt or SourceFormat.Html && snapshot.Length == 0;
+        var allowEmptyOutput = allowEmptyCopy || (operation.Target == ConversionTarget.Markdown && snapshot.Length == 0);
         async Task<OutputValidationResult> ValidateOutputAsync(string path)
         {
-            if (!allowEmptyCopy) return _validator.Validate(path, validationTarget);
+            if (!allowEmptyCopy) return _validator.Validate(path, validationTarget, snapshot.Length);
             return await snapshot.IsUnchangedAsync(path, cancellationToken)
                 ? new OutputValidationResult(true) : new OutputValidationResult(false, "copy_integrity_mismatch");
         }
@@ -116,7 +117,7 @@ internal sealed class SafeFileOperationExecutor
             }
 
             if (!File.Exists(temporaryOutput)
-                || (new FileInfo(temporaryOutput).Length == 0 && !allowEmptyCopy))
+                || (new FileInfo(temporaryOutput).Length == 0 && !allowEmptyOutput))
             {
                 return Result(
                     operation,

@@ -497,6 +497,25 @@ public sealed class LocalizationTests : IDisposable
     }
 
     [Fact]
+    public void Docling_conversion_errors_relocalize_properly()
+    {
+        var localization = LocalizationService.CreateStandalone(AppLanguage.Russian);
+        var viewModel = new MainWindowViewModel(new EmptyScanner(), new EmptyPlanner(), localization: localization);
+        var operation = new PlannedOperation("C:\\source\\scanned.pdf", "scanned.pdf", SourceFormat.Pdf,
+            ConversionTarget.Markdown, ".md", "C:\\result\\scanned.md", true,
+            OperationStatus.Failed, "raw core message", "C:\\result", "C:\\source", 1);
+        var result = new ConversionResult(operation, OperationStatus.Failed, "raw core message",
+            new ConversionDiagnostic("scanned_pdf_unsupported"));
+
+        viewModel.AddConversionError(result);
+        Assert.Equal("scanned.pdf: PDF не содержит извлекаемого текста (возможно, отсканированный документ). Оптическое распознавание текста (OCR) не поддерживается. (код: scanned_pdf_unsupported)",
+            Assert.Single(viewModel.ErrorMessages));
+        localization.Apply(AppLanguage.English);
+        Assert.Equal("scanned.pdf: The PDF does not contain extractable text (possibly a scanned document). Optical character recognition (OCR) is not supported. (code: scanned_pdf_unsupported)",
+            Assert.Single(viewModel.ErrorMessages));
+    }
+
+    [Fact]
     public void Invalid_settings_destination_returns_failure_without_partial_file()
     {
         var blocker = Path.Combine(_root, "blocker"); File.WriteAllText(blocker, "not a directory");

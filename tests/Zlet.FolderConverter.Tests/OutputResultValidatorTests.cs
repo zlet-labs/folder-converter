@@ -62,6 +62,42 @@ public sealed class OutputResultValidatorTests : IDisposable
         Assert.Equal(expected, _validator.Validate(path, ConversionTarget.Pdf).IsValid);
     }
 
+    [Fact]
+    public void Validate_markdown_accepts_valid_utf8_text()
+    {
+        var path = Path.Combine(_rootPath, "valid.md");
+        File.WriteAllText(path, "# Heading\n\nSome UTF-8 text: Привет мир");
+
+        Assert.True(_validator.Validate(path, ConversionTarget.Markdown).IsValid);
+    }
+
+    [Fact]
+    public void Validate_markdown_source_aware_accepts_empty_when_source_empty()
+    {
+        var path = Path.Combine(_rootPath, "empty.md");
+        File.WriteAllBytes(path, []);
+
+        // When sourceLength == 0, empty markdown is valid
+        Assert.True(_validator.Validate(path, ConversionTarget.Markdown, sourceLength: 0).IsValid);
+
+        // When sourceLength > 0, empty markdown is rejected
+        var result = _validator.Validate(path, ConversionTarget.Markdown, sourceLength: 100);
+        Assert.False(result.IsValid);
+        Assert.Equal("output_empty", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Validate_markdown_rejects_invalid_utf8()
+    {
+        var path = Path.Combine(_rootPath, "invalid_utf8.md");
+        // Write invalid UTF-8 byte sequence (e.g. lone continuation byte or invalid start)
+        File.WriteAllBytes(path, [0xFF, 0xFE, 0x00, 0x00]);
+
+        var result = _validator.Validate(path, ConversionTarget.Markdown);
+        Assert.False(result.IsValid);
+        Assert.Equal("output_invalid_utf8", result.ErrorCode);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootPath))

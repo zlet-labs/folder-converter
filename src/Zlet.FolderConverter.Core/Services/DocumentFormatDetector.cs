@@ -34,6 +34,8 @@ public static class DocumentFormatDetector
             ".csv" => SourceFormat.Csv,
             ".tsv" => SourceFormat.Tsv,
             ".epub" => SourceFormat.Epub,
+            ".html" or ".htm" => SourceFormat.Html,
+            ".txt" => SourceFormat.Txt,
             _ when ImageExtensions.Contains(extension) => SourceFormat.Image,
             _ when ArchiveExtensions.Contains(extension) => SourceFormat.Archive,
             _ => SourceFormat.Unknown

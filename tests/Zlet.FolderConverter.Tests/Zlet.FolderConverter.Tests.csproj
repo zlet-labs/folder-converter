@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\Zlet.FolderConverter.App\Zlet.FolderConverter.App.csproj" />
     <ProjectReference Include="..\..\src\Zlet.FolderConverter.Core\Zlet.FolderConverter.Core.csproj" />
     <ProjectReference Include="..\..\src\Zlet.FolderConverter.OfficeWorker\Zlet.FolderConverter.OfficeWorker.csproj" />
+    <None Include="..\..\src\Zlet.FolderConverter.DoclingWorker\zlet_docling_worker.py" Link="zlet_docling_worker.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

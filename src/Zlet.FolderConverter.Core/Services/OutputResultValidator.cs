@@ -7,6 +7,9 @@ namespace Zlet.FolderConverter.Core.Services;
 public sealed class OutputResultValidator : IOutputResultValidator
 {
     public OutputValidationResult Validate(string targetPath, ConversionTarget target)
+        => Validate(targetPath, target, -1);
+
+    public OutputValidationResult Validate(string targetPath, ConversionTarget target, long sourceLength)
     {
         if (string.IsNullOrWhiteSpace(targetPath) || !File.Exists(targetPath))
         {
@@ -15,8 +18,14 @@ public sealed class OutputResultValidator : IOutputResultValidator
 
         try
         {
-            if (new FileInfo(targetPath).Length == 0)
+            var fileLength = new FileInfo(targetPath).Length;
+            if (fileLength == 0)
             {
+                if (target == ConversionTarget.Markdown && sourceLength == 0)
+                {
+                    return new OutputValidationResult(true);
+                }
+
                 return new OutputValidationResult(false, "output_empty");
             }
 
@@ -26,7 +35,8 @@ public sealed class OutputResultValidator : IOutputResultValidator
                 ConversionTarget.Xlsx => ValidateZip(targetPath, "xl/workbook.xml"),
                 ConversionTarget.Pptx => ValidateZip(targetPath, "ppt/presentation.xml"),
                 ConversionTarget.Pdf => ValidatePdf(targetPath),
-                ConversionTarget.Txt or ConversionTarget.Markdown => new OutputValidationResult(true),
+                ConversionTarget.Markdown => ValidateMarkdown(targetPath, sourceLength),
+                ConversionTarget.Txt => new OutputValidationResult(true),
                 ConversionTarget.Csv or ConversionTarget.Tsv or ConversionTarget.Copy => new OutputValidationResult(true),
                 _ => new OutputValidationResult(false, "unsupported_output_validation")
             };
@@ -58,5 +68,34 @@ public sealed class OutputResultValidator : IOutputResultValidator
                && signature.SequenceEqual(Encoding.ASCII.GetBytes("%PDF-"))
             ? new OutputValidationResult(true)
             : new OutputValidationResult(false, "pdf_signature_invalid");
+    }
+
+    private static OutputValidationResult ValidateMarkdown(string path, long sourceLength)
+    {
+        try
+        {
+            var bytes = File.ReadAllBytes(path);
+            if (bytes.Length == 0)
+            {
+                return sourceLength == 0
+                    ? new OutputValidationResult(true)
+                    : new OutputValidationResult(false, "output_empty");
+            }
+
+            var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+            var text = utf8.GetString(bytes);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return sourceLength == 0
+                    ? new OutputValidationResult(true)
+                    : new OutputValidationResult(false, "output_empty");
+            }
+
+            return new OutputValidationResult(true);
+        }
+        catch (DecoderFallbackException)
+        {
+            return new OutputValidationResult(false, "output_invalid_utf8");
+        }
     }
 }

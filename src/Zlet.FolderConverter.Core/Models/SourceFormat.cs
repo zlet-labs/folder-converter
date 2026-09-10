@@ -18,6 +18,8 @@ public enum SourceFormat
     Epub,
     Image,
     Archive,
+    Html,
+    Txt,
     Unknown
 }
 
@@ -41,6 +43,8 @@ public static class SourceFormatExtensions
         SourceFormat.Epub => "EPUB",
         SourceFormat.Image => "Изображения",
         SourceFormat.Archive => "Архивы",
+        SourceFormat.Html => "HTML",
+        SourceFormat.Txt => "TXT",
         SourceFormat.Unknown => "Другие",
         _ => "Другие"
     };

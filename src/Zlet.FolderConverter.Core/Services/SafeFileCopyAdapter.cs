@@ -38,7 +38,7 @@ public sealed class SafeFileCopyAdapter : IConversionAdapter
             SourceFormat.Pdf => ConversionTarget.Pdf,
             SourceFormat.Csv => ConversionTarget.Csv,
             SourceFormat.Tsv => ConversionTarget.Tsv,
-            SourceFormat.Epub or SourceFormat.Image => ConversionTarget.Copy,
+            SourceFormat.Epub or SourceFormat.Image or SourceFormat.Html or SourceFormat.Txt => ConversionTarget.Copy,
             _ => ConversionTarget.Skip
         };
         if (validationTarget == ConversionTarget.Skip)

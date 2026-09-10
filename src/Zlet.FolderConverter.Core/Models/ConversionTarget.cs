@@ -21,7 +21,7 @@ public static class ConversionTargetExtensions
         ConversionTarget.Skip => "Пропускаем",
         ConversionTarget.Copy => "Копировать без изменений",
         ConversionTarget.Txt => "TXT",
-        ConversionTarget.Markdown => "Markdown",
+        ConversionTarget.Markdown => "MD",
         ConversionTarget.Docx => "DOCX",
         ConversionTarget.Xlsx => "XLSX",
         ConversionTarget.Pptx => "PPTX",

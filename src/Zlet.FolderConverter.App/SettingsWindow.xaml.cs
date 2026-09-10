@@ -16,6 +16,7 @@ public partial class SettingsWindow : Window
     private readonly IUpdateChecker _checker;
     private readonly CancellationTokenSource _closed = new();
     private readonly IReadOnlyList<OfficeApplicationAvailability> _office;
+    private readonly bool _doclingAvailable;
     private UpdateResult _update = new("UpdateIdle");
     private string? _resetKey, _copyKey, _browserKey;
     private LocalizationService Localization => LocalizationService.Current;
@@ -31,6 +32,7 @@ public partial class SettingsWindow : Window
         }
         _checker = checker;
         _office = new MicrosoftOfficeCapabilityDetector().Detect();
+        _doclingAvailable = new DoclingWorkerProcessRunner().IsAvailable;
         InitializeComponent();
         (Localization.Language == AppLanguage.Russian ? RussianButton : EnglishButton).IsChecked = true;
         Localization.LanguageChanged += LanguageChanged;
@@ -50,7 +52,7 @@ public partial class SettingsWindow : Window
     {
         VersionText.Text = Localization.Format("SettingsVersion", ProductIdentity.Version);
         ProductText.Text = $"{ProductIdentity.Name} {ProductIdentity.Version}";
-        DiagnosticsBlock.Text = DiagnosticsText.Create(Localization, _office);
+        DiagnosticsBlock.Text = DiagnosticsText.Create(Localization, _office, _doclingAvailable);
         UpdateStatus.Text = Localization.Format(_update.ResourceKey, _update.Release?.Version.ToString() ?? ProductIdentity.Version);
         ReleaseButton.Visibility = _update.Release is null ? Visibility.Collapsed : Visibility.Visible;
         ResetStatus.Text = _resetKey is null ? "" : Localization.Get(_resetKey);
